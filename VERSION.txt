@@ -1,2 +1,2 @@
-Version 5.0 English
-All user-facing text, charts, notifications, forms, documentation, and backend error messages are in English.
+Version 6.0
+Learning and assessment upgrade: weekly assignments, six-skill evidence, baseline/post assessment, teacher verification, accessibility improvements, audit logging, soft deletion, and temporary teacher sessions.

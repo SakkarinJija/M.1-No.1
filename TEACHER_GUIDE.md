@@ -1,33 +1,38 @@
-# Teacher Guide — Version 5 English
+# Teacher Guide — Version 6
 
-## Student Status Definitions
+## Recommended weekly workflow
 
-- **Active:** The student logged an activity within the past 7 days.
-- **Watch:** No activity has been logged for 8–14 days.
-- **Needs support:** No activity has been logged for more than 14 days.
+1. Open **Assignments** and create one focused weekly task.
+2. State one measurable learning objective.
+3. Add a direct resource link and estimated study time.
+4. Specify the evidence students must submit.
+5. Add success criteria that students can understand before starting.
+6. Review the **Students** tab and verify selected evidence.
+7. Use **Assessments** only for teacher-scored baseline, progress, or post-assessment tasks.
+8. Use support notes for follow-up actions, not for sensitive personal information.
 
-Use these statuses to support students, not to shame or rank them. Review study time, activity quality, reflection, and personal circumstances together.
+## Student activity statuses
 
-## Class Control Center
+- **Active:** activity recorded within 7 days
+- **Watch:** no activity recorded for 8–14 days
+- **Needs support:** no activity recorded for more than 14 days
 
-Enter a class announcement and set the weekly study-time goal. Students see the announcement on their overview page after loading or refreshing the website.
+These statuses are prompts for support. They should not be used as grades or punishment.
 
-## Individual Student View
+## Evidence verification
 
-Select a student name or click **View Details** to see:
+- **Pending:** the teacher has not reviewed the evidence
+- **Verified:** the evidence was reviewed and supports the learning claim
+- **Needs revision:** the student should improve or resubmit the evidence
 
-- Study metrics
-- An eight-week study-time chart
-- Up to 20 recent learning logs
-- Private teacher support notes
-- Follow-up status and next action
+Verify a sample of meaningful work rather than trying to verify every entry.
 
-Teacher notes are stored in the `TeacherNotes` sheet and are not shown to students. Record only necessary information and avoid sensitive personal details.
+## Assessment guidance
 
-## Recommended Weekly Routine
+Use comparable tasks and the same rubric for baseline and post-assessment. Record scores for Listening, Speaking, Reading, Writing, Vocabulary, and Grammar only when the task actually measures those skills.
 
-1. Review the **Needs support** group first.
-2. Check the **Watch** group and send a brief reminder when appropriate.
-3. Recognize consistent effort through the **Consistency Spotlight**.
-4. Review average scores together with study time and reflections.
-5. Export CSV data when preparing a meeting or progress report.
+Journey Levels are course stages. They are not official CEFR certificates.
+
+## Privacy
+
+Store only information needed for teaching and progress monitoring. Do not store health records, national identification numbers, home addresses, passwords, disciplinary details, or other sensitive data.

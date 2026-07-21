@@ -13,12 +13,17 @@ const SOURCES = [
   {name:"British Council LearnEnglish Teens",short:"LearnEnglish Teens",icon:"🇬🇧",color:"#8367ee",url:"https://learnenglishteens.britishcouncil.org/",description:"Practise listening, reading, writing, speaking, grammar, vocabulary, and exam skills.",best:"Level 1–6 · Integrated skills"}
 ];
 
+const SKILLS = ["Listening","Speaking","Reading","Writing","Vocabulary","Grammar"];
+const SKILL_ICONS = {Listening:"🎧",Speaking:"🗣️",Reading:"📖",Writing:"✍️",Vocabulary:"🧠",Grammar:"🧩"};
+
 const CFG = window.APP_CONFIG || {};
 const API_READY = Boolean(CFG.API_URL && CFG.API_URL.startsWith("https://script.google.com/"));
 const $ = id => document.getElementById(id);
-let state = {profile:null,logs:[],teacher:null,classInfo:{announcement:"",weeklyGoal:0,updatedAt:""},studentDetail:null};
+let state = {profile:null,logs:[],teacher:null,classInfo:{announcement:"",weeklyGoal:0,updatedAt:""},studentDetail:null,assignments:[],submissions:[],assessments:[]};
 let charts = {};
-let teacherPinCache = "";
+let teacherTokenCache = sessionStorage.getItem("english6_teacherToken") || "";
+let teacherClientId = localStorage.getItem("english6_teacherClientId") || crypto.randomUUID();
+localStorage.setItem("english6_teacherClientId",teacherClientId);
 let teacherAutoRefresh = null;
 let deferredInstallPrompt = null;
 
@@ -29,6 +34,7 @@ window.addEventListener("DOMContentLoaded", init);
 async function init(){
   applyTheme(localStorage.getItem(key("theme")) || "light", false);
   initPwa();
+  initAccessibility();
   $("appTitle").textContent = CFG.APP_TITLE || "English 6-Level Learning Journey";
   $("schoolName").textContent = CFG.SCHOOL_NAME || "Student progress dashboard";
   $("todayText").textContent = new Intl.DateTimeFormat("en-GB",{dateStyle:"long"}).format(new Date());
@@ -57,6 +63,9 @@ async function loadStudent(){
   state.profile = JSON.parse(localStorage.getItem(key("profile")) || "null");
   state.logs = JSON.parse(localStorage.getItem(key("logs")) || "[]");
   state.classInfo = JSON.parse(localStorage.getItem(key("classInfo")) || "null") || state.classInfo;
+  state.assignments = JSON.parse(localStorage.getItem(key("assignments")) || "[]");
+  state.submissions = JSON.parse(localStorage.getItem(key("submissions")) || "[]");
+  state.assessments = JSON.parse(localStorage.getItem(key("assessments")) || "[]");
   if(API_READY && state.profile?.studentKey){
     try{
       const data = await api("studentData",{studentKey:state.profile.studentKey,classCode:CFG.CLASS_CODE});
@@ -64,7 +73,13 @@ async function loadStudent(){
         state.profile = data.profile;
         state.logs = data.logs || [];
         state.classInfo = data.classInfo || state.classInfo;
+        state.assignments = data.assignments || [];
+        state.submissions = data.submissions || [];
+        state.assessments = data.assessments || [];
         localStorage.setItem(key("classInfo"),JSON.stringify(state.classInfo));
+        localStorage.setItem(key("assignments"),JSON.stringify(state.assignments));
+        localStorage.setItem(key("submissions"),JSON.stringify(state.submissions));
+        localStorage.setItem(key("assessments"),JSON.stringify(state.assessments));
         persistLocal();
       }
     }catch(error){
@@ -77,6 +92,7 @@ async function loadStudent(){
 function showPage(id){
   document.querySelectorAll(".page").forEach(page=>page.classList.toggle("active",page.id===id));
   document.querySelectorAll(".nav-btn").forEach(btn=>btn.classList.toggle("active",btn.dataset.page===id));
+  if(id==="teacher"&&teacherTokenCache&&!state.teacher)refreshTeacher(true);
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
@@ -129,6 +145,9 @@ function renderStudent(){
     return `<div class="level-pill ${className}" style="--level-color:${level.color}">L${level.level}<br>${level.title}<div class="level-percent">${Math.round(progress*100)}%</div></div>`;
   }).join("");
   renderClassAnnouncement();
+  renderCurrentAssignment();
+  renderAssignments();
+  renderSkills();
   renderStudentCharts();
   renderRecent();
   renderHeatmap();
@@ -156,15 +175,15 @@ function renderStudentCharts(){
 }
 
 function renderRecent(){
-  const rows = [...state.logs].sort((a,b)=>String(b.Date ?? b.date).localeCompare(String(a.Date ?? a.date))).slice(0,10);
-  $("recentTable").innerHTML = rows.length ? rows.map(log=>`<tr><td>${fmtDate(log.Date ?? log.date)}</td><td><span class="badge badge-purple">L${log.Level ?? log.level}</span></td><td>${esc(displaySource(log.Source ?? log.source))}</td><td>${esc(log.Activity ?? log.activity)}</td><td>${num(log.Minutes ?? log.minutes)} minutes</td><td>${(log.Score ?? log.score) || "-"}</td></tr>`).join("") : `<tr><td colspan="6" class="empty">No data yet</td></tr>`;
-  const history = [...state.logs].sort((a,b)=>String(b.Date ?? b.date).localeCompare(String(a.Date ?? a.date)) || String(b.CreatedAt ?? b.createdAt ?? "").localeCompare(String(a.CreatedAt ?? a.createdAt ?? "")));
-  $("myLogTable").innerHTML = history.length ? history.map(log=>{
-    const id = log.LogId ?? log.logId ?? "";
-    const localId = id || log._localId || "";
-    const actions = localId ? `<div class="table-actions"><button class="btn-xs btn-edit" onclick="editLog('${escAttr(localId)}')">Edit</button><button class="btn-xs btn-delete" onclick="deleteLog('${escAttr(localId)}')">Delete</button></div>` : `<small title="Ask the teacher to update Code.gs to V5 before editing older entries">Legacy Entry</small>`;
-    return `<tr><td>${fmtDate(log.Date ?? log.date)}</td><td>L${log.Level ?? log.level}</td><td>${esc(displaySource(log.Source ?? log.source))}</td><td>${esc(log.Activity ?? log.activity)}</td><td>${num(log.Minutes ?? log.minutes)}</td><td>${num(log.Completed ?? log.completed)}</td><td>${(log.Score ?? log.score) || "-"}</td><td>${esc((log.Reflection ?? log.reflection) || "")}</td><td>${actions}</td></tr>`;
-  }).join("") : `<tr><td colspan="9" class="empty">No data yet</td></tr>`;
+  const rows=[...state.logs].sort((a,b)=>String(b.Date??b.date).localeCompare(String(a.Date??a.date))).slice(0,10);
+  $("recentTable").innerHTML=rows.length?rows.map(log=>`<tr><td>${fmtDate(log.Date??log.date)}</td><td><span class="badge badge-purple">L${log.Level??log.level}</span></td><td>${esc(displaySource(log.Source??log.source))}</td><td>${esc(log.Activity??log.activity)}</td><td>${num(log.Minutes??log.minutes)} minutes</td><td>${(log.Score??log.score)||"-"}</td></tr>`).join(""):`<tr><td colspan="6" class="empty">No data yet</td></tr>`;
+  const history=[...state.logs].sort((a,b)=>String(b.Date??b.date).localeCompare(String(a.Date??a.date))||String(b.CreatedAt??b.createdAt??"").localeCompare(String(a.CreatedAt??a.createdAt??"")));
+  $("myLogTable").innerHTML=history.length?history.map(log=>{
+    const id=log.LogId??log.logId??"",localId=id||log._localId||"";
+    const actions=localId?`<div class="table-actions"><button class="btn-xs btn-edit" onclick="editLog('${escAttr(localId)}')">Edit</button><button class="btn-xs btn-delete" onclick="deleteLog('${escAttr(localId)}')">Delete</button></div>`:`<small>Legacy Entry</small>`;
+    const verify=verificationLabel(log.VerificationStatus??log.verificationStatus);
+    return `<tr><td>${fmtDate(log.Date??log.date)}</td><td>L${log.Level??log.level}</td><td>${esc((log.Skill??log.skill)||"Not set")}</td><td>${esc(displaySource(log.Source??log.source))}</td><td>${esc(log.Activity??log.activity)}</td><td>${num(log.Minutes??log.minutes)}</td><td>${(log.Score??log.score)||"-"}</td><td>${verify}</td><td>${esc((log.Reflection??log.reflection)||"")}</td><td>${actions}</td></tr>`;
+  }).join(""):`<tr><td colspan="10" class="empty">No data yet</td></tr>`;
 }
 
 function renderSources(){
@@ -270,42 +289,43 @@ async function submitLog(event){
 
 async function teacherLoginHandler(event){
   event.preventDefault();
-  teacherPinCache = $("teacherPin").value;
+  const pin=$("teacherPin").value;
   if(API_READY){
-    await refreshTeacher();
-    if(!teacherAutoRefresh) teacherAutoRefresh = setInterval(()=>{if(teacherPinCache) refreshTeacher(true)},300000);
+    try{
+      const login=await api("teacherLogin",{pin,classCode:CFG.CLASS_CODE,clientId:teacherClientId});
+      if(!login.ok)throw Error(login.error);
+      teacherTokenCache=login.token;sessionStorage.setItem("english6_teacherToken",teacherTokenCache);$("teacherPin").value="";
+      await refreshTeacher();
+      if(!teacherAutoRefresh)teacherAutoRefresh=setInterval(()=>{if(teacherTokenCache)refreshTeacher(true)},300000);
+    }catch(error){toast(error.message)}
   }else{
-    state.teacher = localTeacher();
-    $("teacherLogin").classList.add("hidden");
-    $("teacherLayout").classList.add("active");
-    renderTeacher();
-    toast("Demo mode: showing data stored on this device.");
+    teacherTokenCache="demo";state.teacher=localTeacher();$("teacherLogin").classList.add("hidden");$("teacherLayout").classList.add("active");renderTeacher();toast("Demo mode: showing data stored on this device.");
   }
 }
 
 async function refreshTeacher(silent=false){
   try{
-    const data = await api("teacherData",{pin:teacherPinCache,classCode:CFG.CLASS_CODE});
-    if(!data.ok) throw Error(data.error);
-    state.teacher = data;
-    state.classInfo = data.classInfo || state.classInfo;
-    $("teacherLogin").classList.add("hidden");
-    $("teacherLayout").classList.add("active");
-    populateClasses();
-    renderTeacher();
-    if(!silent) toast("Class data updated.");
-  }catch(error){toast(error.message)}
+    if(!teacherTokenCache)throw Error("Your teacher session has expired. Please sign in again.");
+    const data=API_READY?await api("teacherData",{token:teacherTokenCache,classCode:CFG.CLASS_CODE}):localTeacher();
+    if(!data.ok&&API_READY)throw Error(data.error);
+    state.teacher=data;state.classInfo=data.classInfo||state.classInfo;state.assignments=data.assignments||state.assignments;
+    $("teacherLogin").classList.add("hidden");$("teacherLayout").classList.add("active");populateClasses();renderTeacher();
+    if(!silent)toast("Class data updated.");
+  }catch(error){if(String(error.message).toLowerCase().includes("session")){teacherLogout(false)}toast(error.message)}
 }
 
 function localTeacher(){
   const m = metrics();
   const lastActive = state.logs.length ? String(state.logs.map(log=>log.Date ?? log.date).sort().at(-1) || "") : "";
   return {
-    students:state.profile ? [{studentKey:state.profile.studentKey,studentId:state.profile.studentId,name:state.profile.name,className:state.profile.className,currentLevel:m.currentLevel,minutes:m.minutes,activities:m.activities,avgScore:m.avgScore,lastActive,weekMinutes:m.week.minutes,activeDays30:activeDaysWithin(state.logs,30),streak:m.streak,sessions30:logsWithin(state.logs,30).length}] : [],
+    students:state.profile ? [{studentKey:state.profile.studentKey,studentId:state.profile.studentId,name:state.profile.name,className:state.profile.className,currentLevel:m.currentLevel,minutes:m.minutes,activities:m.activities,avgScore:m.avgScore,lastActive,weekMinutes:m.week.minutes,activeDays30:activeDaysWithin(state.logs,30),streak:m.streak,sessions30:logsWithin(state.logs,30).length,verifiedCount:state.logs.filter(log=>String(log.VerificationStatus??log.verificationStatus).toLowerCase()==="verified").length}] : [],
     weekly:buildWeekly(state.logs,12),
     sourceUsage:groupSource(state.logs),
     generatedAt:new Date().toISOString(),
-    classInfo:state.classInfo
+    classInfo:state.classInfo,
+    assignments:state.assignments,
+    submissions:state.submissions,
+    assessmentSummary:buildLocalAssessmentSummary()
   };
 }
 
@@ -348,6 +368,8 @@ function renderTeacher(){
   renderConsistency(students);
   renderInterventions(students);
   renderTeacherTable();
+  renderTeacherAssignments();
+  renderAssessmentSummary();
 }
 
 function renderTeacherCharts(students){
@@ -384,18 +406,18 @@ function renderTeacherTable(){
     .sort((a,b)=>b._days-a._days || num(a.weekMinutes)-num(b.weekMinutes));
   $("teacherStudentTable").innerHTML = rows.length ? rows.map(student=>{
     const status = student._days<=7 ? ["Active","badge-green","#2fc6a1",""] : student._days<=14 ? ["Watch","badge-orange","#ffad42","watch-row"] : ["Needs support","badge-red","#ff6f91","risk-row"];
-    return `<tr class="${status[3]}"><td><button class="student-link" onclick="openStudentDetail('${escAttr(student.studentKey)}')"><b>${esc(student.name)}</b><br><small>${esc(student.studentId)}</small></button></td><td>${esc(student.className)}</td><td><span class="badge badge-purple">Level ${num(student.currentLevel)}</span></td><td>${num(student.weekMinutes)} minutes</td><td>${num(student.activeDays30)} days</td><td><span class="streak-chip">🔥 ${num(student.streak)}</span></td><td>${num(student.avgScore).toFixed(1)}%</td><td>${fmtDate(student.lastActive)}</td><td><div class="student-status"><span class="status-dot" style="background:${status[2]}"></span><span class="badge ${status[1]}">${status[0]}</span></div></td><td><button class="btn-xs btn-view" onclick="openStudentDetail('${escAttr(student.studentKey)}')">View Details</button></td></tr>`;
+    return `<tr class="${status[3]}"><td><button class="student-link" onclick="openStudentDetail('${escAttr(student.studentKey)}')"><b>${esc(student.name)}</b><br><small>${esc(student.studentId)}</small></button></td><td>${esc(student.className)}</td><td><span class="badge badge-purple">Level ${num(student.currentLevel)}</span></td><td>${num(student.weekMinutes)} minutes</td><td>${num(student.activeDays30)} days</td><td>${num(student.verifiedCount)} verified</td><td>${num(student.avgScore).toFixed(1)}%</td><td>${fmtDate(student.lastActive)}</td><td><div class="student-status"><span class="status-dot" style="background:${status[2]}"></span><span class="badge ${status[1]}">${status[0]}</span></div></td><td><button class="btn-xs btn-view" onclick="openStudentDetail('${escAttr(student.studentKey)}')">View Details</button></td></tr>`;
   }).join("") : `<tr><td colspan="10" class="empty">No students found.</td></tr>`;
 }
 
 function exportTeacherCsv(){
   if(!state.teacher) return;
-  const header = ["Student ID","Name","Class","Current Level","Total Minutes","Week Minutes","Activities","Active Days 30","Streak","Average Score","Last Active"];
-  const rows = (state.teacher.students || []).map(student=>[student.studentId,student.name,student.className,student.currentLevel,student.minutes,student.weekMinutes,student.activities,student.activeDays30,student.streak,student.avgScore,student.lastActive]);
-  download('\ufeff'+[header,...rows].map(row=>row.map(csv).join(",")).join("\n"),"teacher_summary_v5.csv","text/csv;charset=utf-8");
+  const header = ["Student ID","Name","Class","Current Level","Total Minutes","Week Minutes","Activities","Active Days 30","Verified Evidence","Average Score","Last Active"];
+  const rows = (state.teacher.students || []).map(student=>[student.studentId,student.name,student.className,student.currentLevel,student.minutes,student.weekMinutes,student.activities,student.activeDays30,student.verifiedCount,student.avgScore,student.lastActive]);
+  download('\ufeff'+[header,...rows].map(row=>row.map(csv).join(",")).join("\n"),"teacher_summary_v6.csv","text/csv;charset=utf-8");
 }
 
-function exportMyData(){download(JSON.stringify({version:5,exportedAt:new Date().toISOString(),profile:state.profile,logs:state.logs},null,2),"my_english_data_v5.json","application/json")}
+function exportMyData(){download(JSON.stringify({version:6,exportedAt:new Date().toISOString(),profile:state.profile,logs:state.logs,assignments:state.assignments,submissions:state.submissions,assessments:state.assessments},null,2),"my_english_data_v6.json","application/json")}
 
 function importMyData(event){
   const file = event.target.files?.[0];
@@ -407,6 +429,8 @@ function importMyData(event){
       if(!data.profile || !Array.isArray(data.logs)) throw Error("Invalid backup file format.");
       state.profile = data.profile;
       state.logs = data.logs;
+      state.assignments = data.assignments || []; state.submissions = data.submissions || []; state.assessments = data.assessments || [];
+      localStorage.setItem(key("assignments"),JSON.stringify(state.assignments));localStorage.setItem(key("submissions"),JSON.stringify(state.submissions));localStorage.setItem(key("assessments"),JSON.stringify(state.assessments));
       persistLocal();
       renderStudent();
       toast("Data imported successfully.");
@@ -420,9 +444,9 @@ function openProfile(){
   const form = $("profileForm");
   const profile = state.profile || {};
   ["studentId","name","className","currentLevel","classCode"].forEach(field=>form.elements[field].value=profile[field] || (field==="classCode"?CFG.CLASS_CODE:""));
-  $("profileModal").classList.add("open");
+  openModal("profileModal");
 }
-function closeProfile(){$("profileModal").classList.remove("open")}
+function closeProfile(){closeModal("profileModal")}
 
 
 function renderClassAnnouncement(){
@@ -437,12 +461,12 @@ function findLogById(id){return state.logs.find(log=>(log.LogId ?? log.logId ?? 
 function editLog(id){
   const log=findLogById(id);if(!log){toast("Learning log not found.");return;}
   const form=$("logForm");
-  const map={logId:id,date:log.Date??log.date,level:log.Level??log.level,source:(log.Source??log.source)==="ELLO"?"ELLLO":(log.Source??log.source),minutes:log.Minutes??log.minutes,activity:log.Activity??log.activity,completed:log.Completed??log.completed,score:log.Score??log.score,confidence:log.Confidence??log.confidence,evidence:log.Evidence??log.evidence,reflection:log.Reflection??log.reflection};
+  const map={logId:id,date:log.Date??log.date,level:log.Level??log.level,source:(log.Source??log.source)==="ELLO"?"ELLLO":(log.Source??log.source),skill:log.Skill??log.skill??"",minutes:log.Minutes??log.minutes,activity:log.Activity??log.activity,completed:log.Completed??log.completed,score:log.Score??log.score,confidence:log.Confidence??log.confidence,evidence:log.Evidence??log.evidence,reflection:log.Reflection??log.reflection};
   Object.entries(map).forEach(([name,value])=>{if(form.elements[name])form.elements[name].value=value??""});
   $("logFormTitle").textContent="Edit Learning Log";$("logFormHint").textContent="Review the information, then save your changes.";$("saveLogButton").textContent="Save Changes";$("cancelEditButton").classList.remove("hidden");form.closest(".form-card").classList.add("editing-banner");showPage("log");
 }
 function cancelEditLog(){
-  const form=$("logForm");if(!form)return;form.reset();form.elements.logId.value="";form.elements.date.value=todayISO();form.elements.minutes.value=30;form.elements.completed.value=1;$("logFormTitle").textContent="Learning Log";$("logFormHint").textContent="Complete this after studying. It takes about one minute.";$("saveLogButton").textContent="Save Learning Log";$("cancelEditButton").classList.add("hidden");form.closest(".form-card").classList.remove("editing-banner");
+  const form=$("logForm");if(!form)return;form.reset();form.elements.logId.value="";form.elements.date.value=todayISO();form.elements.minutes.value=30;form.elements.completed.value=1;if(form.elements.skill)form.elements.skill.value="";$("logFormTitle").textContent="Learning Log";$("logFormHint").textContent="Complete this after studying. It takes about one minute.";$("saveLogButton").textContent="Save Learning Log";$("cancelEditButton").classList.add("hidden");form.closest(".form-card").classList.remove("editing-banner");
 }
 async function deleteLog(id){
   if(!confirm("Delete this learning log?"))return;
@@ -451,24 +475,29 @@ async function deleteLog(id){
 
 async function saveClassInfo(event){
   event.preventDefault();const form=Object.fromEntries(new FormData(event.target).entries());
-  try{if(API_READY){const data=await api("updateClassInfo",{...form,pin:teacherPinCache,classCode:CFG.CLASS_CODE});if(!data.ok)throw Error(data.error);state.classInfo=data.classInfo;}else{state.classInfo={...form,weeklyGoal:num(form.weeklyGoal),updatedAt:todayISO()};localStorage.setItem(key("classInfo"),JSON.stringify(state.classInfo));}renderStudent();toast("Class settings saved.");}catch(error){toast(error.message)}
+  try{if(API_READY){const data=await api("updateClassInfo",{...form,token:teacherTokenCache,classCode:CFG.CLASS_CODE});if(!data.ok)throw Error(data.error);state.classInfo=data.classInfo;}else{state.classInfo={...form,weeklyGoal:num(form.weeklyGoal),updatedAt:todayISO()};localStorage.setItem(key("classInfo"),JSON.stringify(state.classInfo));}renderStudent();toast("Class settings saved.");}catch(error){toast(error.message)}
 }
 
 async function openStudentDetail(studentKey){
-  try{let data;if(API_READY){data=await api("studentDetail",{pin:teacherPinCache,classCode:CFG.CLASS_CODE,studentKey});if(!data.ok)throw Error(data.error);}else{data={ok:true,profile:state.profile,logs:state.logs,note:JSON.parse(localStorage.getItem(key("teacherNote"))||"null")||{}};}state.studentDetail=data;renderStudentDetail();$("studentDetailModal").classList.add("open");}catch(error){toast(error.message)}
+  try{
+    let data;if(API_READY){data=await api("studentDetail",{token:teacherTokenCache,classCode:CFG.CLASS_CODE,studentKey});if(!data.ok)throw Error(data.error)}else{data={ok:true,profile:state.profile,logs:state.logs,note:JSON.parse(localStorage.getItem(key("teacherNote"))||"null")||{},assessments:state.assessments,submissions:state.submissions}};
+    state.studentDetail=data;renderStudentDetail();openModal("studentDetailModal");
+  }catch(error){toast(error.message)}
 }
-function closeStudentDetail(){$("studentDetailModal").classList.remove("open")}
+function closeStudentDetail(){closeModal("studentDetailModal")}
 function renderStudentDetail(){
   const data=state.studentDetail;if(!data)return;const profile=data.profile||{},logs=data.logs||[],minutes=sum(logs,log=>num(log.Minutes??log.minutes)),scores=logs.map(log=>num(log.Score??log.score)).filter(Boolean),avg=scores.length?sum(scores,x=>x)/scores.length:0,week=currentWeekData(logs),streak=studyStreak(logs);
   $("studentDetailName").textContent=profile.name||"Student Details";$("studentDetailMeta").textContent=`${profile.studentId||"-"} · ${profile.className||"-"} · Level ${profile.currentLevel||1}`;
-  const cards=[["Total Study Time",minutes,"minutes"],["This Week",week.minutes,"minutes"],["Streak",streak,"days"],["Average Score",avg.toFixed(1),"%"]];$("studentDetailMetrics").innerHTML=cards.map(card=>`<div class="card metric"><div class="metric-label">${card[0]}</div><div class="metric-value">${card[1]}</div><div class="metric-sub">${card[2]}</div></div>`).join("");
+  const cards=[["Total Study Time",minutes,"minutes"],["This Week",week.minutes,"minutes"],["Verified Evidence",logs.filter(log=>String(log.VerificationStatus||"").toLowerCase()==="verified").length,"entries"],["Average Score",avg.toFixed(1),"%"]];$("studentDetailMetrics").innerHTML=cards.map(card=>`<div class="card metric"><div class="metric-label">${card[0]}</div><div class="metric-value">${card[1]}</div><div class="metric-sub">${card[2]}</div></div>`).join("");
   const weekly=buildWeekly(logs,8);setChart("studentDetailChart","bar",{labels:weekly.map(item=>item.label),datasets:[{label:"Minutes",data:weekly.map(item=>item.minutes),backgroundColor:"#8367ee",borderRadius:8}]},{plugins:{title:{display:true,text:"Study Time Over the Last 8 Weeks"}},scales:{y:{beginAtZero:true}}});
-  $("studentDetailLogs").innerHTML=logs.length?[...logs].sort((a,b)=>String(b.Date).localeCompare(String(a.Date))).slice(0,20).map(log=>`<tr><td>${fmtDate(log.Date)}</td><td>L${log.Level}</td><td>${esc(displaySource(log.Source))}</td><td>${esc(log.Activity)}</td><td>${num(log.Minutes)}</td><td>${log.Score||"-"}</td><td>${esc(log.Reflection||"")}</td></tr>`).join(""):`<tr><td colspan="7" class="empty">No data yet</td></tr>`;
+  renderMiniSkillGrid(logs);
+  $("studentDetailLogs").innerHTML=logs.length?[...logs].sort((a,b)=>String(b.Date).localeCompare(String(a.Date))).slice(0,20).map(log=>{const id=log.LogId||"",status=String(log.VerificationStatus||"Pending");return `<tr><td>${fmtDate(log.Date)}</td><td>${esc(log.Skill||"Not set")}</td><td>${esc(log.Activity)}</td><td>${num(log.Minutes)}</td><td>${log.Score||"-"}</td><td>${log.Evidence?`<a href="${escAttr(log.Evidence)}" target="_blank" rel="noopener">Open</a>`:"-"}</td><td><div class="table-actions">${verificationLabel(status)}${id?`<button class="btn-xs btn-view" onclick="verifyLog('${escAttr(id)}','Verified')">Verify</button><button class="btn-xs btn-delete" onclick="verifyLog('${escAttr(id)}','Needs revision')">Revise</button>`:""}</div></td></tr>`}).join(""):`<tr><td colspan="7" class="empty">No data yet</td></tr>`;
   const form=$("teacherNoteForm"),note=data.note||{};form.elements.studentKey.value=profile.studentKey||"";form.elements.status.value=note.Status??note.status??"";form.elements.note.value=note.TeacherNote??note.note??"";form.elements.nextAction.value=note.NextAction??note.nextAction??"";
+  const assessmentForm=$("assessmentForm");assessmentForm.elements.studentKey.value=profile.studentKey||"";assessmentForm.elements.assessmentDate.value=todayISO();renderStudentAssessmentHistory(data.assessments||[]);
 }
 async function saveTeacherNote(event){
   event.preventDefault();const form=Object.fromEntries(new FormData(event.target).entries());
-  try{if(API_READY){const data=await api("saveTeacherNote",{...form,pin:teacherPinCache,classCode:CFG.CLASS_CODE});if(!data.ok)throw Error(data.error);state.studentDetail.note=data.note;}else{localStorage.setItem(key("teacherNote"),JSON.stringify(form));state.studentDetail.note=form;}toast("Teacher guidance saved.");}catch(error){toast(error.message)}
+  try{if(API_READY){const data=await api("saveTeacherNote",{...form,token:teacherTokenCache,classCode:CFG.CLASS_CODE});if(!data.ok)throw Error(data.error);state.studentDetail.note=data.note}else{localStorage.setItem(key("teacherNote"),JSON.stringify(form));state.studentDetail.note=form}toast("Teacher guidance saved.")}catch(error){toast(error.message)}
 }
 
 function initPwa(){
@@ -624,3 +653,40 @@ function escAttr(value){return esc(value).replace(/`/g,"&#096;")}
 function esc(value){return String(value ?? "").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[char]))}
 function csv(value){return `"${String(value ?? "").replaceAll('"','""')}"`}
 function download(content,name,type){const blob=new Blob([content],{type}),anchor=document.createElement("a");anchor.href=URL.createObjectURL(blob);anchor.download=name;anchor.click();setTimeout(()=>URL.revokeObjectURL(anchor.href),1000)}
+
+
+function initAccessibility(){
+  document.addEventListener("keydown",event=>{if(event.key==="Escape"){document.querySelectorAll(".modal.open").forEach(modal=>closeModal(modal.id))}});
+}
+function openModal(id){const modal=$(id);if(!modal)return;modal.classList.add("open");setTimeout(()=>modal.querySelector("input,select,textarea,button,[tabindex]")?.focus(),30)}
+function closeModal(id){const modal=$(id);if(modal)modal.classList.remove("open")}
+function insertReflectionStarter(text){const area=$("logForm")?.elements.reflection;if(!area)return;area.value=(area.value?area.value+" ":"")+text;area.focus()}
+function showTeacherTab(id){document.querySelectorAll(".teacher-tab").forEach(btn=>{const active=btn.dataset.teacherTab===id;btn.classList.toggle("active",active);btn.setAttribute("aria-selected",String(active))});document.querySelectorAll(".teacher-panel").forEach(panel=>panel.classList.toggle("active",panel.dataset.teacherPanel===id))}
+function teacherLogout(showMessage=true){teacherTokenCache="";sessionStorage.removeItem("english6_teacherToken");state.teacher=null;clearInterval(teacherAutoRefresh);teacherAutoRefresh=null;$("teacherLayout")?.classList.remove("active");$("teacherLogin")?.classList.remove("hidden");if(showMessage)toast("Teacher session ended.")}
+
+function assignmentId(item){return item.AssignmentId??item.assignmentId??""}
+function submissionFor(id){return state.submissions.find(item=>(item.AssignmentId??item.assignmentId)===id)}
+function activeAssignments(){return [...state.assignments].filter(item=>String(item.Active??item.active??"TRUE").toUpperCase()!=="FALSE").sort((a,b)=>String(a.DueDate??a.dueDate).localeCompare(String(b.DueDate??b.dueDate)))}
+function renderCurrentAssignment(){const box=$("currentAssignment");if(!box)return;const assignment=activeAssignments().find(item=>!submissionFor(assignmentId(item)))||activeAssignments()[0];if(!assignment){box.classList.add("hidden");return}const id=assignmentId(assignment),submission=submissionFor(id),due=assignment.DueDate??assignment.dueDate;box.classList.remove("hidden");box.innerHTML=`<div><small>Current Assignment</small><h3>${esc(assignment.Title??assignment.title)}</h3><p>${esc(assignment.Objective??assignment.objective)}</p><div class="assignment-meta"><span class="badge badge-blue">Due ${fmtDate(due)}</span><span class="badge badge-purple">${num(assignment.EstimatedMinutes??assignment.estimatedMinutes)} minutes</span><span class="badge ${submission?"badge-green":"badge-orange"}">${submission?"Submitted":"Not submitted"}</span></div></div><button class="btn btn-primary" onclick="showPage('assignments')">View Assignment</button>`}
+function renderAssignments(){const host=$("assignmentCards");if(!host)return;const rows=activeAssignments();host.innerHTML=rows.length?rows.map(item=>{const id=assignmentId(item),sub=submissionFor(id),url=item.ResourceUrl??item.resourceUrl,skills=item.Skills??item.skills??"",status=sub?String(sub.Status??sub.status??"Submitted"):"Not submitted";return `<article class="card assignment-card"><div class="assignment-status"><span class="badge badge-blue">Due ${fmtDate(item.DueDate??item.dueDate)}</span><span class="badge ${sub?"badge-green":"badge-orange"}">${esc(status)}</span></div><div><h4>${esc(item.Title??item.title)}</h4><p class="assignment-objective">${esc(item.Objective??item.objective)}</p></div><div class="assignment-detail"><b>Instructions</b><p>${esc(item.Instructions??item.instructions)}</p></div><div><b>Evidence:</b> ${esc(item.EvidenceRequired??item.evidenceRequired)}</div><div><b>Success Criteria:</b> ${esc(item.SuccessCriteria??item.successCriteria)}</div><div class="assignment-meta"><span>${esc(skills)}</span><span>${num(item.EstimatedMinutes??item.estimatedMinutes)} minutes</span></div><div class="assignment-actions">${url?`<a class="btn btn-outline" href="${escAttr(url)}" target="_blank" rel="noopener">Open Resource</a>`:""}<button class="btn btn-primary" onclick="openAssignmentSubmission('${escAttr(id)}')">${sub?"Update Submission":"Submit Evidence"}</button></div>${sub?`<small>Submitted ${fmtDate(sub.SubmittedAt??sub.submittedAt)}${sub.TeacherFeedback?` · Feedback: ${esc(sub.TeacherFeedback)}`:""}</small>`:""}</article>`}).join(""):`<div class="card empty">No active assignments yet.</div>`}
+function openAssignmentSubmission(id){const assignment=state.assignments.find(item=>assignmentId(item)===id),sub=submissionFor(id);if(!assignment)return;const form=$("assignmentSubmissionForm");form.elements.assignmentId.value=id;form.elements.evidenceUrl.value=sub?.EvidenceUrl??sub?.evidenceUrl??"";form.elements.reflection.value=sub?.Reflection??sub?.reflection??"";$("assignmentSubmissionTitle").textContent=assignment.Title??assignment.title;$("assignmentSubmissionHint").textContent=assignment.EvidenceRequired??assignment.evidenceRequired??"";openModal("assignmentSubmissionModal")}
+function closeAssignmentSubmission(){closeModal("assignmentSubmissionModal")}
+async function submitAssignment(event){event.preventDefault();if(!state.profile){openProfile();return}const form=Object.fromEntries(new FormData(event.target).entries());form.studentKey=state.profile.studentKey;form.classCode=CFG.CLASS_CODE;try{if(API_READY){const data=await api("submitAssignment",form);if(!data.ok)throw Error(data.error);await loadStudent()}else{const old=state.submissions.find(item=>(item.AssignmentId??item.assignmentId)===form.assignmentId);const row={AssignmentId:form.assignmentId,StudentKey:form.studentKey,EvidenceUrl:form.evidenceUrl,Reflection:form.reflection,Status:"Submitted",SubmittedAt:todayISO()};if(old)Object.assign(old,row);else state.submissions.push(row);localStorage.setItem(key("submissions"),JSON.stringify(state.submissions));renderStudent()}closeAssignmentSubmission();toast("Assignment submitted.")}catch(error){toast(error.message)}}
+
+function skillStats(logs){const result={};SKILLS.forEach(skill=>result[skill]={entries:0,verified:0,scores:[],minutes:0});logs.forEach(log=>{const skill=log.Skill??log.skill;if(!result[skill])return;result[skill].entries++;result[skill].minutes+=num(log.Minutes??log.minutes);const score=num(log.Score??log.score);if(score>0)result[skill].scores.push(score);if(String(log.VerificationStatus??log.verificationStatus).toLowerCase()==="verified")result[skill].verified++});return result}
+function renderSkills(){const host=$("skillMatrix");if(!host)return;const stats=skillStats(state.logs);host.innerHTML=SKILLS.map(skill=>{const data=stats[skill],avg=data.scores.length?sum(data.scores,x=>x)/data.scores.length:0;return `<article class="skill-card"><div class="skill-card-head"><strong>${SKILL_ICONS[skill]} ${skill}</strong><span class="badge badge-purple">${data.verified} verified</span></div><div class="skill-score">${avg?avg.toFixed(0)+"%":"—"}</div><small>${data.entries} evidence entries · ${data.minutes} minutes</small><div class="progress"><span style="width:${Math.min(100,avg)}%"></span></div></article>`}).join("");renderAssessmentGrowth()}
+function renderAssessmentGrowth(){const assessments=[...state.assessments].sort((a,b)=>String(a.AssessmentDate??a.assessmentDate).localeCompare(String(b.AssessmentDate??b.assessmentDate)));const labels=SKILLS;const sets=assessments.map((row,index)=>({label:row.AssessmentType??row.assessmentType,data:labels.map(skill=>num(row[skill]??row[skill.toLowerCase()])),borderColor:["#ff6f91","#ffad42","#4d8df7"][index%3],backgroundColor:"transparent",tension:.25}));setChart("assessmentGrowthChart","radar",{labels,datasets:sets},{scales:{r:{beginAtZero:true,max:100}},plugins:{legend:{position:"bottom"}}});const host=$("assessmentCards");host.innerHTML=assessments.length?assessments.map(row=>`<div class="assessment-result"><strong><span>${esc(row.AssessmentType??row.assessmentType)}</span><span>${num(row.Overall??row.overall)}%</span></strong><p>${fmtDate(row.AssessmentDate??row.assessmentDate)} · ${esc(row.Notes??row.notes??"")}</p></div>`).join(""):`<div class="empty compact-empty">No teacher assessments yet.</div>`}
+function verificationLabel(value){const status=String(value||"Pending");const low=status.toLowerCase();const cls=low==="verified"?"verification-verified":low.includes("revision")||low.includes("reject")?"verification-rejected":"verification-pending";return `<span class="verification-chip ${cls}">${esc(status)}</span>`}
+
+function resetAssignmentForm(){const form=$("assignmentForm");form.reset();form.elements.assignmentId.value="";form.elements.estimatedMinutes.value=30;form.elements.active.value="TRUE"}
+function renderTeacherAssignments(){const host=$("teacherAssignmentList");if(!host||!state.teacher)return;const assignments=state.teacher.assignments||[],submissions=state.teacher.submissions||[];host.innerHTML=assignments.length?[...assignments].sort((a,b)=>String(b.CreatedAt).localeCompare(String(a.CreatedAt))).map(item=>{const id=assignmentId(item),count=submissions.filter(sub=>(sub.AssignmentId??sub.assignmentId)===id).length,active=String(item.Active??"TRUE").toUpperCase()!=="FALSE";return `<article class="teacher-assignment-item"><header><div><strong>${esc(item.Title)}</strong><small>Due ${fmtDate(item.DueDate)} · ${count} submissions</small></div><span class="badge ${active?"badge-green":"badge-orange"}">${active?"Active":"Archived"}</span></header><p>${esc(item.Objective||"")}</p><button class="btn-xs btn-edit" onclick="editAssignment('${escAttr(id)}')">Edit</button></article>`}).join(""):`<div class="empty compact-empty">No assignments yet.</div>`}
+function editAssignment(id){const item=(state.teacher?.assignments||[]).find(row=>assignmentId(row)===id);if(!item)return;const form=$("assignmentForm");const map={assignmentId:id,title:item.Title,objective:item.Objective,resourceName:item.ResourceName,resourceUrl:item.ResourceUrl,instructions:item.Instructions,evidenceRequired:item.EvidenceRequired,dueDate:item.DueDate,estimatedMinutes:item.EstimatedMinutes,skills:item.Skills,successCriteria:item.SuccessCriteria,active:String(item.Active).toUpperCase()==="FALSE"?"FALSE":"TRUE"};Object.entries(map).forEach(([name,value])=>{if(form.elements[name])form.elements[name].value=value??""});form.scrollIntoView({behavior:"smooth",block:"start"})}
+async function saveAssignment(event){event.preventDefault();const form=Object.fromEntries(new FormData(event.target).entries());try{if(API_READY){const data=await api("saveAssignment",{...form,token:teacherTokenCache,classCode:CFG.CLASS_CODE});if(!data.ok)throw Error(data.error)}else{const id=form.assignmentId||crypto.randomUUID(),row={AssignmentId:id,...Object.fromEntries(Object.entries(form).map(([k,v])=>[k[0].toUpperCase()+k.slice(1),v]))};const old=state.assignments.find(item=>assignmentId(item)===id);old?Object.assign(old,row):state.assignments.push(row);localStorage.setItem(key("assignments"),JSON.stringify(state.assignments))}resetAssignmentForm();await refreshTeacher(true);renderStudent();toast("Assignment saved.")}catch(error){toast(error.message)}}
+
+function renderAssessmentSummary(){const host=$("assessmentSummaryTable");if(!host||!state.teacher)return;const summary=state.teacher.assessmentSummary||[];host.innerHTML=summary.length?summary.map(row=>{const growth=(num(row.post)-num(row.baseline));return `<tr><td><b>${esc(row.name)}</b><br><small>${esc(row.studentId)}</small></td><td>${esc(row.className)}</td><td>${row.baseline?row.baseline+"%":"—"}</td><td>${row.progress?row.progress+"%":"—"}</td><td>${row.post?row.post+"%":"—"}</td><td>${row.post&&row.baseline?`${growth>=0?"+":""}${growth}`:"—"}</td><td><button class="btn-xs btn-view" onclick="openStudentDetail('${escAttr(row.studentKey)}')">Open</button></td></tr>`}).join(""):`<tr><td colspan="7" class="empty">No assessment data yet.</td></tr>`}
+function buildLocalAssessmentSummary(){if(!state.profile)return[];const find=type=>state.assessments.find(row=>String(row.AssessmentType??row.assessmentType).toLowerCase()===type.toLowerCase());return[{studentKey:state.profile.studentKey,studentId:state.profile.studentId,name:state.profile.name,className:state.profile.className,baseline:num(find("Baseline")?.Overall),progress:num(find("Progress")?.Overall),post:num(find("Post")?.Overall)}]}
+function renderMiniSkillGrid(logs){const stats=skillStats(logs);$("studentDetailSkills").innerHTML=SKILLS.map(skill=>{const d=stats[skill],avg=d.scores.length?sum(d.scores,x=>x)/d.scores.length:0;return `<div class="mini-skill"><strong>${SKILL_ICONS[skill]} ${skill}</strong><small>${d.entries} entries · ${d.verified} verified · ${avg?avg.toFixed(0)+"%":"no score"}</small></div>`}).join("")}
+function renderStudentAssessmentHistory(rows){const host=$("studentAssessmentHistory");host.innerHTML=rows.length?[...rows].sort((a,b)=>String(b.AssessmentDate??b.assessmentDate).localeCompare(String(a.AssessmentDate??a.assessmentDate))).map(row=>`<div class="assessment-history-row"><span>${esc(row.AssessmentType??row.assessmentType)} · ${fmtDate(row.AssessmentDate??row.assessmentDate)}</span><strong>${num(row.Overall??row.overall)}%</strong></div>`).join(""):`<div class="empty compact-empty">No assessments yet.</div>`}
+async function saveAssessment(event){event.preventDefault();const form=Object.fromEntries(new FormData(event.target).entries());try{const data=API_READY?await api("saveAssessment",{...form,token:teacherTokenCache,classCode:CFG.CLASS_CODE}):{ok:true,assessment:{...form,Overall:averageAssessment(form)}};if(!data.ok)throw Error(data.error);if(!API_READY){state.assessments=state.assessments.filter(row=>!((row.StudentKey??row.studentKey)===form.studentKey&&(row.AssessmentType??row.assessmentType)===form.assessmentType));state.assessments.push(data.assessment);localStorage.setItem(key("assessments"),JSON.stringify(state.assessments))}await openStudentDetail(form.studentKey);await refreshTeacher(true);toast("Assessment saved.")}catch(error){toast(error.message)}}
+function averageAssessment(form){const values=SKILLS.map(skill=>form[skill.toLowerCase()]).filter(value=>value!==""&&value!==undefined&&value!==null).map(num);return values.length?Math.round(sum(values,x=>x)/values.length):0}
+async function verifyLog(logId,status){try{if(API_READY){const data=await api("verifyLog",{token:teacherTokenCache,classCode:CFG.CLASS_CODE,logId,status});if(!data.ok)throw Error(data.error)}else{const log=state.logs.find(item=>(item.LogId??item.logId??item._localId)===logId);if(log)log.VerificationStatus=status;persistLocal()}await openStudentDetail(state.studentDetail.profile.studentKey);await refreshTeacher(true);toast("Evidence verification updated.")}catch(error){toast(error.message)}}

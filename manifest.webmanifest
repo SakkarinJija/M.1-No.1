@@ -1,7 +1,7 @@
 {
   "name": "English 6-Level Learning Journey",
   "short_name": "English Journey",
-  "description": "Student learning dashboard and teacher progress tracker",
+  "description": "Classroom assignments, English skill evidence, assessment growth, and teacher progress tracking",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
