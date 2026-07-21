@@ -7,7 +7,7 @@
 </head>
 <body>
 <header class="topbar"><div class="brand"><div class="brand-mark">6L</div><div><h1 id="appTitle">English 6-Level Learning Journey</h1><small id="schoolName">Student progress dashboard</small></div></div>
-<div class="top-actions"><button class="btn btn-soft" onclick="openProfile()">👤 โปรไฟล์</button><button class="btn btn-outline" onclick="exportMyData()">⬇ สำรองข้อมูล</button><button class="btn btn-primary" onclick="showPage('log')">＋ บันทึกวันนี้</button></div></header>
+<div class="top-actions"><button class="btn btn-soft" onclick="openProfile()">👤 โปรไฟล์</button><button class="btn btn-outline" onclick="exportMyData()">⬇ สำรองข้อมูล</button><button class="btn btn-outline" onclick="document.getElementById('importFile').click()">⬆ นำเข้าข้อมูล</button><input id="importFile" class="hidden" type="file" accept="application/json" onchange="importMyData(event)"><button class="btn btn-primary" onclick="showPage('log')">＋ บันทึกวันนี้</button></div></header>
 <div class="layout">
 <aside class="sidebar">
 <div class="nav-title">Student</div>
@@ -27,7 +27,7 @@
 <div class="section-head"><div><h3>เส้นทาง 6 ระดับ</h3><p>แต่ละระดับเป็นขั้นกิจกรรม ไม่ใช่ใบรับรอง CEFR</p></div></div>
 <div class="level-strip" id="levelStrip"></div>
 <div class="section-head"><div><h3>สถิติของฉัน</h3><p>เวลาเรียนรายสัปดาห์และการใช้ 3 เว็บไซต์</p></div></div>
-<div class="grid two-col"><div class="card"><div class="chart-box"><canvas id="studentWeeklyChart"></canvas></div></div><div class="card"><div class="chart-box small"><canvas id="studentSourceChart"></canvas></div><div class="next-action"><strong>สิ่งที่ควรทำต่อไป</strong><p id="nextAction"></p></div></div></div>
+<div class="grid two-col"><div class="card"><div class="chart-box"><canvas id="studentWeeklyChart"></canvas></div><div class="weekly-goal-box" id="weeklyGoalBox"></div></div><div class="card"><div class="chart-box small"><canvas id="studentSourceChart"></canvas></div><div class="next-action"><strong>สิ่งที่ควรทำต่อไป</strong><p id="nextAction"></p></div></div></div>
 <div class="section-head"><div><h3>3 เว็บไซต์หลัก</h3></div></div><div class="source-cards" id="sourceCards"></div>
 <div class="section-head"><div><h3>กิจกรรมล่าสุด</h3></div></div><div class="table-wrap"><table><thead><tr><th>วันที่</th><th>ระดับ</th><th>เว็บไซต์</th><th>กิจกรรม</th><th>เวลา</th><th>คะแนน</th></tr></thead><tbody id="recentTable"></tbody></table></div>
 </section>
@@ -57,7 +57,7 @@
 <div id="teacherLayout" class="teacher-layout"><div class="section-head"><div><h3>ภาพรวมชั้นเรียน</h3><p>ติดตามความสม่ำเสมอ เวลาเรียน คะแนน และระดับล่าสุด</p></div><div class="filter-row"><select id="teacherClassFilter" onchange="renderTeacher()"><option value="">ทุกห้อง</option></select><button class="btn btn-outline" onclick="refreshTeacher()">↻ รีเฟรช</button><button class="btn btn-soft" onclick="exportTeacherCsv()">CSV</button></div></div>
 <div class="grid metric-grid" id="teacherMetrics"></div>
 <div class="grid three-col" style="margin-top:17px"><div class="card"><div class="chart-box small"><canvas id="teacherWeeklyChart"></canvas></div></div><div class="card"><div class="chart-box small"><canvas id="teacherLevelChart"></canvas></div></div><div class="card"><div class="chart-box small"><canvas id="teacherSourceChart"></canvas></div></div></div>
-<div class="section-head"><div><h3>รายงานรายนักเรียน</h3></div><div class="filter-row"><input id="studentSearch" placeholder="ค้นหาชื่อหรือรหัส…" oninput="renderTeacherTable()"></div></div>
+<div class="section-head"><div><h3>รายงานรายนักเรียน</h3><p>เรียงนักเรียนที่ต้องติดตามก่อน</p></div><div class="filter-row"><select id="teacherStatusFilter" onchange="renderTeacherTable()"><option value="">ทุกสถานะ</option><option value="active">Active</option><option value="watch">Watch</option><option value="support">Needs support</option></select><input id="studentSearch" placeholder="ค้นหาชื่อหรือรหัส…" oninput="renderTeacherTable()"></div></div><div class="teacher-alerts" id="teacherAlerts"></div>
 <div class="table-wrap"><table><thead><tr><th>นักเรียน</th><th>ห้อง</th><th>ระดับล่าสุด</th><th>เวลาเรียน</th><th>กิจกรรม</th><th>คะแนนเฉลี่ย</th><th>เข้าใช้ล่าสุด</th><th>สถานะ</th></tr></thead><tbody id="teacherStudentTable"></tbody></table></div></div>
 </section>
 </main></div>
