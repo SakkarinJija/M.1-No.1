@@ -24,3 +24,48 @@ main{min-width:0;padding:28px}.page{display:none;animation:fade .25s ease}.page.
 .risk-row td{background:#fff7f8!important}.watch-row td{background:#fffdf6!important}
 @media(max-width:900px){.teacher-alerts{grid-template-columns:1fr 1fr 1fr}}
 @media(max-width:590px){.teacher-alerts{grid-template-columns:1fr}}
+
+/* ===== Version 3 ===== */
+.btn-icon{width:42px;height:42px;padding:0;display:grid;place-items:center;background:var(--card);border:1px solid var(--line);color:var(--ink)}
+.teacher-nav-title{margin-top:18px}.level-percent{font-size:10px;margin-top:3px}.cefr-label{font-size:11px;color:var(--muted)}
+.card-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:15px}.card-title-row h4{margin:0;font-size:16px}.card-title-row p{margin:4px 0 0;color:var(--muted);font-size:12px}.mini-legend{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:6px;white-space:nowrap}.mini-legend i{display:inline-block;width:11px;height:11px;border-radius:3px;background:#4d8df7}
+.learning-insights{align-items:stretch}.heatmap{display:grid;grid-template-rows:repeat(7,13px);grid-auto-flow:column;grid-auto-columns:13px;gap:4px;overflow-x:auto;padding:5px 2px 10px}.heat-cell{display:block;width:13px;height:13px;border-radius:3px;background:#edf0f5;border:1px solid rgba(83,101,125,.06)}.heat-1{background:#dce9ff}.heat-2{background:#a8c7ff}.heat-3{background:#6b9ef7}.heat-4{background:#315fbc}
+.achievement-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.achievement{display:flex;align-items:center;gap:10px;padding:11px;border-radius:15px;border:1px solid var(--line);background:var(--card);transition:.2s}.achievement.unlocked{background:linear-gradient(135deg,#fff9e9,#fff);border-color:#f1dfad;box-shadow:0 8px 18px rgba(255,176,74,.10)}.achievement.locked{opacity:.55;filter:grayscale(.75)}.achievement-icon{font-size:25px}.achievement strong{display:block;font-size:12px}.achievement small{display:block;color:var(--muted);font-size:10px;margin-top:3px;line-height:1.35}
+.teacher-charts{margin-top:17px}.teacher-alerts{margin:17px 0 0}.alert-card span{display:block;margin-top:7px;color:var(--muted);font-size:11px;line-height:1.45}.rank-list,.intervention-list{display:grid;gap:9px}.rank-item{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:15px;background:linear-gradient(135deg,#f7f9ff,#fff);border:1px solid var(--line)}.rank-medal{font-size:22px}.rank-person{min-width:0;flex:1}.rank-person strong,.intervention-item strong{display:block;font-size:13px}.rank-person small,.intervention-item small{display:block;color:var(--muted);font-size:10px;margin-top:3px}.streak-chip{display:inline-flex;align-items:center;white-space:nowrap;padding:5px 8px;border-radius:999px;background:#fff3df;color:#9b6415;font-size:10px;font-weight:900}
+.intervention-item{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:12px 13px;border-radius:15px;border:1px solid var(--line)}.intervention-item p{margin:6px 0 0;color:var(--muted);font-size:11px;line-height:1.45}.priority-high{background:#fff5f6;border-color:#f4d2d9}.priority-medium{background:#fffaf0;border-color:#f2dfb9}.compact-empty{padding:22px}.updated-at{display:block;margin-top:5px;color:var(--muted);font-size:10px}.login-head{margin-top:0}.modal-head p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.source-icon{background:var(--soft)}
+
+:root[data-theme="dark"]{--ink:#e7edf7;--muted:#9ba9bd;--bg:#0c1423;--card:#121d2f;--line:#26344a;--shadow:0 18px 45px rgba(0,0,0,.28)}
+:root[data-theme="dark"] body{background:radial-gradient(circle at 8% 5%,rgba(139,109,246,.13),transparent 24%),radial-gradient(circle at 94% 9%,rgba(239,93,168,.10),transparent 22%),var(--bg)}
+:root[data-theme="dark"] .topbar,:root[data-theme="dark"] .sidebar{background:rgba(13,22,37,.94)}
+:root[data-theme="dark"] .btn-soft,:root[data-theme="dark"] .nav-btn:hover,:root[data-theme="dark"] .close{background:#1b2940}
+:root[data-theme="dark"] .btn-outline,:root[data-theme="dark"] .btn-icon{background:#121d2f}
+:root[data-theme="dark"] .nav-btn{color:#aebbd0}:root[data-theme="dark"] .nav-btn.active{background:linear-gradient(135deg,#182943,#2b2348)}
+:root[data-theme="dark"] .sidebar-note{background:linear-gradient(145deg,#2c2417,#151e2e);border-color:#4b3d24;color:#e4cf9f}
+:root[data-theme="dark"] .setup-banner{background:#332b16;border-color:#625124;color:#f2daa0}
+:root[data-theme="dark"] .level-pill{background:#182438}:root[data-theme="dark"] .progress{background:#26344a}
+:root[data-theme="dark"] .next-action,:root[data-theme="dark"] .weekly-goal-box{background:linear-gradient(135deg,#162840,#2b1e39);border-color:#30415b;color:#b7c4d7}
+:root[data-theme="dark"] input,:root[data-theme="dark"] select,:root[data-theme="dark"] textarea{background:#0e192a;border-color:#34445d;color:var(--ink)}
+:root[data-theme="dark"] label{color:#b6c3d5}:root[data-theme="dark"] .table-wrap,:root[data-theme="dark"] table,:root[data-theme="dark"] .modal-card,:root[data-theme="dark"] .level-card{background:#121d2f}
+:root[data-theme="dark"] th{background:#19263a;color:#c5d0df}:root[data-theme="dark"] tr:hover td{background:#162236}
+:root[data-theme="dark"] .badge-purple{background:#2c244b;color:#c5b5ff}:root[data-theme="dark"] .badge-blue{background:#172d4b;color:#8db8f6}:root[data-theme="dark"] .badge-green{background:#16372f;color:#80d5bb}:root[data-theme="dark"] .badge-orange{background:#3d3015;color:#e9c36b}:root[data-theme="dark"] .badge-red{background:#40222a;color:#f4a6b5}
+:root[data-theme="dark"] .alert-active{background:#123029;border-color:#245245}:root[data-theme="dark"] .alert-watch{background:#342a14;border-color:#5b4923}:root[data-theme="dark"] .alert-support{background:#382027;border-color:#5b303b}
+:root[data-theme="dark"] .rank-item{background:linear-gradient(135deg,#172337,#121d2f)}:root[data-theme="dark"] .priority-high{background:#321d24;border-color:#58303b}:root[data-theme="dark"] .priority-medium{background:#302816;border-color:#554725}
+:root[data-theme="dark"] .heat-cell{background:#253248}:root[data-theme="dark"] .heat-1{background:#24446b}:root[data-theme="dark"] .heat-2{background:#315f98}:root[data-theme="dark"] .heat-3{background:#417dca}:root[data-theme="dark"] .heat-4{background:#65a2f2}
+:root[data-theme="dark"] .achievement.unlocked{background:linear-gradient(135deg,#342c17,#17202f);border-color:#584921}:root[data-theme="dark"] .risk-row td{background:#2b1b21!important}:root[data-theme="dark"] .watch-row td{background:#282315!important}
+
+@media(max-width:1150px){.top-actions .secondary-action{display:none}.achievement-grid{grid-template-columns:1fr}.heatmap{grid-auto-columns:12px;grid-template-rows:repeat(7,12px)}.heat-cell{width:12px;height:12px}}
+@media(max-width:900px){.topbar{gap:8px}.top-actions{gap:5px}.btn{padding:9px 11px}.teacher-charts{grid-template-columns:1fr}.heatmap{grid-auto-columns:13px;grid-template-rows:repeat(7,13px)}.heat-cell{width:13px;height:13px}}
+@media(max-width:590px){.brand h1{font-size:14px}.brand-mark{width:40px;height:40px;border-radius:13px}.top-actions .btn-soft,.top-actions .btn-outline{display:none}.btn-icon{display:grid!important;width:38px;height:38px}.achievement-grid{grid-template-columns:1fr}.learning-insights{grid-template-columns:1fr}.card-title-row{align-items:flex-start}.teacher-alerts{grid-template-columns:1fr}}
+
+@media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff!important;color:#111!important;font-size:11px}
+  .topbar,.sidebar,.setup-banner,.top-actions,.nav-btn,.form-actions,.filter-row,.toast{display:none!important}
+  .layout{display:block}.page{display:none!important}.page.active{display:block!important}main{padding:0!important}
+  .hero{box-shadow:none;border:1px solid #ccc;background:#173e79!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .card,.table-wrap,.level-card{box-shadow:none!important;break-inside:avoid;border-color:#ccc!important;background:#fff!important;color:#111!important}
+  .metric-grid{grid-template-columns:repeat(3,1fr)!important}.two-col,.three-col,.roadmap-grid{grid-template-columns:1fr 1fr!important}
+  .section-head{margin-top:14px}.chart-box{height:220px}.source-cards{grid-template-columns:repeat(3,1fr)!important}.source-card{min-height:160px}
+  th{position:static;background:#eee!important;color:#111!important}.heatmap{overflow:visible}.achievement.locked{display:none}
+}

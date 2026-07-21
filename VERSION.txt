@@ -1,2 +1,12 @@
-Version 2.0
-Improved weekly goals, streak, teacher intervention filters, and backup import.
+Version 3.0
+
+Features:
+- Read Along Level 1-4
+- ELLO display name and Level 1-6
+- Dark Mode
+- 16-week learning heatmap
+- Achievement badges
+- Printable/PDF reports
+- Teacher consistency and intervention panels
+- Weekly minutes, 30-day active days, and streak per student
+- Backward compatibility with existing ELLLO records
