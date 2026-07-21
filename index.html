@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173e79">
-<title>English 6-Level Learning Journey · V4</title>
+<title>English 6-Level Learning Journey · V5 English</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="styles.css">
@@ -12,131 +12,131 @@
 <body>
 <header class="topbar">
   <div class="brand">
-    <div class="brand-mark">V4</div>
+    <div class="brand-mark">V5</div>
     <div><h1 id="appTitle">English 6-Level Learning Journey</h1><small id="schoolName">Student progress dashboard</small></div>
   </div>
   <div class="top-actions">
-    <button class="btn btn-soft hidden" id="installButton" onclick="installApp()">＋ ติดตั้งแอป</button>
-    <button class="btn btn-icon" id="themeButton" onclick="toggleTheme()" title="สลับโหมดสี" aria-label="สลับโหมดสี">🌙</button>
-    <button class="btn btn-soft" onclick="printReport()">🖨 รายงาน</button>
-    <button class="btn btn-soft" onclick="openProfile()">👤 โปรไฟล์</button>
-    <button class="btn btn-outline secondary-action" onclick="exportMyData()">⬇ สำรอง</button>
-    <button class="btn btn-outline secondary-action" onclick="document.getElementById('importFile').click()">⬆ นำเข้า</button>
+    <button class="btn btn-soft hidden" id="installButton" onclick="installApp()">＋ Install App</button>
+    <button class="btn btn-icon" id="themeButton" onclick="toggleTheme()" title="Toggle color theme" aria-label="Toggle color theme">🌙</button>
+    <button class="btn btn-soft" onclick="printReport()">🖨 Report</button>
+    <button class="btn btn-soft" onclick="openProfile()">👤 Profile</button>
+    <button class="btn btn-outline secondary-action" onclick="exportMyData()">⬇ Backup</button>
+    <button class="btn btn-outline secondary-action" onclick="document.getElementById('importFile').click()">⬆ Import</button>
     <input id="importFile" class="hidden" type="file" accept="application/json" onchange="importMyData(event)">
-    <button class="btn btn-primary" onclick="showPage('log')">＋ บันทึกวันนี้</button>
+    <button class="btn btn-primary" onclick="showPage('log')">＋ Add Today’s Log</button>
   </div>
 </header>
 <div class="layout">
 <aside class="sidebar">
   <div class="nav-title">Student</div>
-  <button class="nav-btn active" data-page="dashboard" onclick="showPage('dashboard')"><span class="nav-icon">⌂</span>ภาพรวม</button>
-  <button class="nav-btn" data-page="log" onclick="showPage('log')"><span class="nav-icon">✎</span>บันทึกเรียน</button>
-  <button class="nav-btn" data-page="roadmap" onclick="showPage('roadmap')"><span class="nav-icon">◫</span>6 ระดับ</button>
+  <button class="nav-btn active" data-page="dashboard" onclick="showPage('dashboard')"><span class="nav-icon">⌂</span>Overview</button>
+  <button class="nav-btn" data-page="log" onclick="showPage('log')"><span class="nav-icon">✎</span>Learning Log</button>
+  <button class="nav-btn" data-page="roadmap" onclick="showPage('roadmap')"><span class="nav-icon">◫</span>6 Levels</button>
   <div class="nav-title teacher-nav-title">Teacher</div>
-  <button class="nav-btn" data-page="teacher" onclick="showPage('teacher')"><span class="nav-icon">▥</span>ติดตามชั้นเรียน</button>
-  <div class="sidebar-note"><strong>Version 4</strong><br>ประกาศชั้นเรียน แก้ไขบันทึก ดูข้อมูลรายคน และบันทึกการช่วยเหลือของครู</div>
+  <button class="nav-btn" data-page="teacher" onclick="showPage('teacher')"><span class="nav-icon">▥</span>Class Tracker</button>
+  <div class="sidebar-note"><strong>Version 5 · English</strong><br>Class announcements, editable logs, individual student details, and teacher support notes.</div>
 </aside>
 <main>
-<div class="setup-banner" id="setupBanner">ขณะนี้เป็นโหมดทดลอง ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้เท่านั้น หากต้องการให้ครูติดตามนักเรียนทุกคน ให้เชื่อม Google Apps Script ตาม README</div>
+<div class="setup-banner" id="setupBanner">Demo mode is active. Data is stored only in this browser. To let the teacher track every student, connect Google Apps Script by following the README.</div>
 
 <section id="dashboard" class="page active">
   <div class="hero">
-    <div class="hero-content"><span class="eyebrow">6 MONTH LEARNING JOURNEY · VERSION 4</span><h2 id="welcomeText">Welcome, learner! 👋</h2><p>ฝึกจาก 3 เว็บไซต์หลักอย่างเป็นขั้นตอน บันทึกเวลา คะแนน ผลงาน และความสม่ำเสมอ เพื่อให้เห็นพัฒนาการจริง</p></div>
-    <div class="hero-side"><div id="todayText" class="hero-date"></div><span id="modeBadge" class="mode-badge">กำลังโหลด…</span></div>
+    <div class="hero-content"><span class="eyebrow">6-MONTH LEARNING JOURNEY · VERSION 5</span><h2 id="welcomeText">Welcome, learner! 👋</h2><p>Build your English step by step with three core learning websites. Record study time, scores, evidence, and consistency to see real progress.</p></div>
+    <div class="hero-side"><div id="todayText" class="hero-date"></div><span id="modeBadge" class="mode-badge">Loading…</span></div>
   </div>
 
   <div id="classAnnouncement" class="class-announcement hidden">
     <div class="announcement-icon">📣</div>
-    <div><small>ประกาศจากครู</small><strong id="announcementText"></strong><span id="announcementUpdated"></span></div>
+    <div><small>Teacher Announcement</small><strong id="announcementText"></strong><span id="announcementUpdated"></span></div>
   </div>
 
   <div class="grid metric-grid" id="studentMetrics"></div>
 
-  <div class="section-head"><div><h3>เส้นทาง 6 ระดับ</h3><p>แต่ละระดับเป็นขั้นกิจกรรมของโครงการ ไม่ใช่ใบรับรอง CEFR</p></div></div>
+  <div class="section-head"><div><h3>6-Level Learning Path</h3><p>Each level is a project learning stage, not an official CEFR certificate.</p></div></div>
   <div class="level-strip" id="levelStrip"></div>
 
-  <div class="section-head"><div><h3>สถิติของฉัน</h3><p>เวลาเรียนรายสัปดาห์และการใช้ 3 เว็บไซต์</p></div></div>
+  <div class="section-head"><div><h3>My Progress</h3><p>Weekly study time and use of the three learning websites.</p></div></div>
   <div class="grid two-col">
     <div class="card"><div class="chart-box"><canvas id="studentWeeklyChart"></canvas></div><div class="weekly-goal-box" id="weeklyGoalBox"></div></div>
-    <div class="card"><div class="chart-box small"><canvas id="studentSourceChart"></canvas></div><div class="next-action"><strong>สิ่งที่ควรทำต่อไป</strong><p id="nextAction"></p></div></div>
+    <div class="card"><div class="chart-box small"><canvas id="studentSourceChart"></canvas></div><div class="next-action"><strong>Recommended Next Step</strong><p id="nextAction"></p></div></div>
   </div>
 
-  <div class="section-head"><div><h3>ความสม่ำเสมอและความสำเร็จ</h3><p>ดูวันที่เรียนจริงและเป้าหมายที่ปลดล็อกแล้ว</p></div></div>
+  <div class="section-head"><div><h3>Consistency and Achievements</h3><p>Review your study days and unlocked milestones.</p></div></div>
   <div class="grid two-col learning-insights">
-    <div class="card"><div class="card-title-row"><div><h4>Learning Calendar</h4><p>กิจกรรมย้อนหลัง 16 สัปดาห์</p></div><span class="mini-legend"><i></i> มากขึ้น</span></div><div id="learningHeatmap" class="heatmap"></div></div>
-    <div class="card"><div class="card-title-row"><div><h4>Achievement Badges</h4><p>ปลดล็อกจากการลงมือทำ ไม่ใช่การแข่งขัน</p></div><span id="badgeCount" class="badge badge-purple">0/8</span></div><div id="achievementGrid" class="achievement-grid"></div></div>
+    <div class="card"><div class="card-title-row"><div><h4>Learning Calendar</h4><p>Activity from the past 16 weeks</p></div><span class="mini-legend"><i></i> More activity</span></div><div id="learningHeatmap" class="heatmap"></div></div>
+    <div class="card"><div class="card-title-row"><div><h4>Achievement Badges</h4><p>Unlocked through consistent action, not competition.</p></div><span id="badgeCount" class="badge badge-purple">0/8</span></div><div id="achievementGrid" class="achievement-grid"></div></div>
   </div>
 
-  <div class="section-head"><div><h3>3 เว็บไซต์หลัก</h3><p>เลือกกิจกรรมให้เหมาะกับเป้าหมายในแต่ละระดับ</p></div></div>
+  <div class="section-head"><div><h3>Three Core Websites</h3><p>Choose activities that match the goal of each level.</p></div></div>
   <div class="source-cards" id="sourceCards"></div>
 
-  <div class="section-head"><div><h3>กิจกรรมล่าสุด</h3></div></div>
-  <div class="table-wrap"><table><thead><tr><th>วันที่</th><th>ระดับ</th><th>เว็บไซต์</th><th>กิจกรรม</th><th>เวลา</th><th>คะแนน</th></tr></thead><tbody id="recentTable"></tbody></table></div>
+  <div class="section-head"><div><h3>Recent Activities</h3></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Date</th><th>Level</th><th>Website</th><th>Activity</th><th>Time</th><th>Score</th></tr></thead><tbody id="recentTable"></tbody></table></div>
 </section>
 
 <section id="log" class="page">
-  <div class="section-head"><div><h3 id="logFormTitle">บันทึกการเรียน</h3><p id="logFormHint">กรอกหลังเรียนเสร็จ ใช้เวลาประมาณ 1 นาที</p></div></div>
+  <div class="section-head"><div><h3 id="logFormTitle">Learning Log</h3><p id="logFormHint">Complete this after studying. It takes about one minute.</p></div></div>
   <div class="card form-card"><form id="logForm" onsubmit="submitLog(event)"><input type="hidden" name="logId"><div class="form-grid">
-    <div><label>วันที่</label><input type="date" name="date" required></div>
-    <div><label>ระดับ</label><select name="level" id="logLevel" required></select></div>
-    <div><label>เว็บไซต์</label><select name="source" required><option value="Read Along">Read Along</option><option value="ELLLO">ELLO</option><option value="LearnEnglish Teens">LearnEnglish Teens</option></select></div>
-    <div><label>เวลาเรียน (นาที)</label><input type="number" name="minutes" min="1" max="300" value="30" required></div>
-    <div class="wide"><label>ชื่อบทเรียน/กิจกรรม</label><input name="activity" placeholder="เช่น ELLO A1: My Family" required></div>
-    <div><label>กิจกรรมที่จบ</label><input type="number" name="completed" min="0" value="1"></div>
-    <div><label>คะแนน (%)</label><input type="number" name="score" min="0" max="100"></div>
-    <div><label>ความมั่นใจ 1–5</label><select name="confidence"><option value="">ไม่ระบุ</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
-    <div><label>หลักฐาน/ลิงก์ผลงาน</label><input name="evidence" placeholder="ถ้ามี"></div>
-    <div class="full"><label>สิ่งที่ได้เรียนรู้หรือจุดที่ยังยาก</label><textarea name="reflection" placeholder="เช่น วันนี้ฟังคำเชื่อมได้ดีขึ้น แต่ยังพูดตามไม่ทัน"></textarea></div>
-  </div><div class="form-actions"><button type="button" id="cancelEditButton" class="btn btn-outline hidden" onclick="cancelEditLog()">ยกเลิกการแก้ไข</button><button type="reset" class="btn btn-outline" onclick="setTimeout(cancelEditLog,0)">ล้างข้อมูล</button><button id="saveLogButton" class="btn btn-primary">บันทึกผลการเรียน</button></div></form></div>
-  <div class="section-head"><div><h3>ประวัติของฉัน</h3></div></div>
-  <div class="table-wrap"><table><thead><tr><th>วันที่</th><th>ระดับ</th><th>เว็บไซต์</th><th>กิจกรรม</th><th>นาที</th><th>จบ</th><th>คะแนน</th><th>สะท้อนผล</th><th>จัดการ</th></tr></thead><tbody id="myLogTable"></tbody></table></div>
+    <div><label>Date</label><input type="date" name="date" required></div>
+    <div><label>Level</label><select name="level" id="logLevel" required></select></div>
+    <div><label>Website</label><select name="source" required><option value="Read Along">Read Along</option><option value="ELLLO">ELLO</option><option value="LearnEnglish Teens">LearnEnglish Teens</option></select></div>
+    <div><label>Study Time (minutes)</label><input type="number" name="minutes" min="1" max="300" value="30" required></div>
+    <div class="wide"><label>Lesson or Activity Name</label><input name="activity" placeholder="Example: ELLO A1 — My Family" required></div>
+    <div><label>Activities Completed</label><input type="number" name="completed" min="0" value="1"></div>
+    <div><label>Score (%)</label><input type="number" name="score" min="0" max="100"></div>
+    <div><label>Confidence 1–5</label><select name="confidence"><option value="">Not specified</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+    <div><label>Evidence or Work Link</label><input name="evidence" placeholder="Optional"></div>
+    <div class="full"><label>What I Learned or Found Difficult</label><textarea name="reflection" placeholder="Example: I understood linking words better today, but repeating the sentences was still difficult."></textarea></div>
+  </div><div class="form-actions"><button type="button" id="cancelEditButton" class="btn btn-outline hidden" onclick="cancelEditLog()">Cancel Editing</button><button type="reset" class="btn btn-outline" onclick="setTimeout(cancelEditLog,0)">Clear Form</button><button id="saveLogButton" class="btn btn-primary">Save Learning Log</button></div></form></div>
+  <div class="section-head"><div><h3>My Learning History</h3></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Date</th><th>Level</th><th>Website</th><th>Activity</th><th>Minutes</th><th>Completed</th><th>Score</th><th>Reflection</th><th>Actions</th></tr></thead><tbody id="myLogTable"></tbody></table></div>
 </section>
 
-<section id="roadmap" class="page"><div class="section-head"><div><h3>Roadmap 6 เดือน · 6 ระดับ</h3><p>ระดับเป็นขั้นพัฒนาของโครงการ ไม่ใช่การรับรอง CEFR อย่างเป็นทางการ</p></div></div><div class="roadmap-grid" id="roadmapGrid"></div></section>
+<section id="roadmap" class="page"><div class="section-head"><div><h3>6-Month Roadmap · 6 Levels</h3><p>The levels are project development stages, not official CEFR certification.</p></div></div><div class="roadmap-grid" id="roadmapGrid"></div></section>
 
 <section id="teacher" class="page">
-  <div id="teacherLogin" class="card teacher-login"><div class="section-head login-head"><div><h3>Teacher Dashboard</h3><p>ใส่รหัสครูเพื่อดูข้อมูลรวม</p></div></div><form onsubmit="teacherLoginHandler(event)"><label>รหัสครู</label><input type="password" id="teacherPin" required autocomplete="current-password"><div class="form-actions"><button class="btn btn-primary">เข้าสู่หน้าครู</button></div></form></div>
+  <div id="teacherLogin" class="card teacher-login"><div class="section-head login-head"><div><h3>Teacher Dashboard</h3><p>Enter the teacher PIN to view class data.</p></div></div><form onsubmit="teacherLoginHandler(event)"><label>Teacher PIN</label><input type="password" id="teacherPin" required autocomplete="current-password"><div class="form-actions"><button class="btn btn-primary">Open Teacher Dashboard</button></div></form></div>
   <div id="teacherLayout" class="teacher-layout">
-    <div class="section-head"><div><h3>ภาพรวมชั้นเรียน</h3><p>ติดตามความสม่ำเสมอ เวลาเรียน คะแนน และนักเรียนที่ต้องช่วย</p><small id="teacherUpdatedAt" class="updated-at"></small></div><div class="filter-row"><select id="teacherClassFilter" onchange="renderTeacher()"><option value="">ทุกห้อง</option></select><button class="btn btn-outline" onclick="refreshTeacher()">↻ รีเฟรช</button><button class="btn btn-soft" onclick="exportTeacherCsv()">CSV</button><button class="btn btn-soft" onclick="printReport()">🖨 พิมพ์</button></div></div>
+    <div class="section-head"><div><h3>Class Overview</h3><p>Track consistency, study time, scores, and students who may need support.</p><small id="teacherUpdatedAt" class="updated-at"></small></div><div class="filter-row"><select id="teacherClassFilter" onchange="renderTeacher()"><option value="">All Classes</option></select><button class="btn btn-outline" onclick="refreshTeacher()">↻ Refresh</button><button class="btn btn-soft" onclick="exportTeacherCsv()">CSV</button><button class="btn btn-soft" onclick="printReport()">🖨 Print</button></div></div>
     <div class="grid metric-grid" id="teacherMetrics"></div>
     <div class="teacher-alerts" id="teacherAlerts"></div>
 
     <div class="card class-control-card">
-      <div class="card-title-row"><div><h4>Class Control Center</h4><p>กำหนดข้อความที่นักเรียนเห็นและเป้าหมายเวลาเรียนต่อสัปดาห์</p></div><span class="badge badge-blue">V4</span></div>
+      <div class="card-title-row"><div><h4>Class Control Center</h4><p>Set the class message and weekly study-time goal shown to students.</p></div><span class="badge badge-blue">V5</span></div>
       <form id="classInfoForm" onsubmit="saveClassInfo(event)"><div class="form-grid compact-grid">
-        <div class="full"><label>ประกาศถึงนักเรียน</label><textarea name="announcement" maxlength="500" placeholder="เช่น สัปดาห์นี้ให้ทำ ELLO A1 อย่างน้อย 2 บท"></textarea></div>
-        <div><label>เป้าหมายรายสัปดาห์ (นาที)</label><input type="number" name="weeklyGoal" min="30" max="600" step="10" value="90"></div>
-        <div class="class-control-help"><small>ข้อความนี้จะแสดงบนหน้าภาพรวมของนักเรียนทุกคน และใช้เป็นเส้นเป้าหมายในกราฟ</small></div>
-      </div><div class="form-actions"><button class="btn btn-primary">บันทึกการตั้งค่าชั้นเรียน</button></div></form>
+        <div class="full"><label>Announcement to Students</label><textarea name="announcement" maxlength="500" placeholder="Example: Complete at least two ELLO A1 lessons this week."></textarea></div>
+        <div><label>Weekly Goal (minutes)</label><input type="number" name="weeklyGoal" min="30" max="600" step="10" value="90"></div>
+        <div class="class-control-help"><small>This message appears on every student dashboard and the weekly goal is shown as a target line in the chart.</small></div>
+      </div><div class="form-actions"><button class="btn btn-primary">Save Class Settings</button></div></form>
     </div>
 
     <div class="grid three-col teacher-charts"><div class="card"><div class="chart-box small"><canvas id="teacherWeeklyChart"></canvas></div></div><div class="card"><div class="chart-box small"><canvas id="teacherLevelChart"></canvas></div></div><div class="card"><div class="chart-box small"><canvas id="teacherSourceChart"></canvas></div></div></div>
 
-    <div class="section-head"><div><h3>ความสม่ำเสมอและการช่วยเหลือ</h3><p>ยกย่องความต่อเนื่อง และจัดลำดับผู้ที่ควรได้รับการติดต่อก่อน</p></div></div>
+    <div class="section-head"><div><h3>Consistency and Support</h3><p>Recognize consistent effort and identify students who may need contact first.</p></div></div>
     <div class="grid two-col">
-      <div class="card"><div class="card-title-row"><div><h4>Consistency Spotlight</h4><p>เรียงจากจำนวนวันที่เรียนใน 30 วัน ไม่ใช้คะแนนจัดอันดับ</p></div></div><div id="consistencyList" class="rank-list"></div></div>
-      <div class="card"><div class="card-title-row"><div><h4>Intervention Priority</h4><p>รายชื่อที่ครูควรตรวจสอบและให้การสนับสนุน</p></div></div><div id="interventionList" class="intervention-list"></div></div>
+      <div class="card"><div class="card-title-row"><div><h4>Consistency Spotlight</h4><p>Sorted by study days in the past 30 days. Scores are not used for ranking.</p></div></div><div id="consistencyList" class="rank-list"></div></div>
+      <div class="card"><div class="card-title-row"><div><h4>Intervention Priority</h4><p>Students the teacher may need to check in with and support.</p></div></div><div id="interventionList" class="intervention-list"></div></div>
     </div>
 
-    <div class="section-head"><div><h3>รายงานรายนักเรียน</h3><p>เรียงนักเรียนที่ต้องติดตามก่อน</p></div><div class="filter-row"><select id="teacherStatusFilter" onchange="renderTeacherTable()"><option value="">ทุกสถานะ</option><option value="active">Active</option><option value="watch">Watch</option><option value="support">Needs support</option></select><input id="studentSearch" placeholder="ค้นหาชื่อหรือรหัส…" oninput="renderTeacherTable()"></div></div>
-    <div class="table-wrap"><table><thead><tr><th>นักเรียน</th><th>ห้อง</th><th>ระดับ</th><th>สัปดาห์นี้</th><th>วันที่เรียน 30 วัน</th><th>Streak</th><th>คะแนนเฉลี่ย</th><th>เข้าใช้ล่าสุด</th><th>สถานะ</th><th>รายละเอียด</th></tr></thead><tbody id="teacherStudentTable"></tbody></table></div>
+    <div class="section-head"><div><h3>Individual Student Report</h3><p>Students needing follow-up are shown first.</p></div><div class="filter-row"><select id="teacherStatusFilter" onchange="renderTeacherTable()"><option value="">All Statuses</option><option value="active">Active</option><option value="watch">Watch</option><option value="support">Needs support</option></select><input id="studentSearch" placeholder="Search by name or ID…" oninput="renderTeacherTable()"></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Student</th><th>Class</th><th>Level</th><th>This Week</th><th>Study Days (30 Days)</th><th>Streak</th><th>Average Score</th><th>Last Active</th><th>Status</th><th>Details</th></tr></thead><tbody id="teacherStudentTable"></tbody></table></div>
   </div>
 </section>
 </main></div>
 
-<div class="modal" id="profileModal"><div class="modal-card"><div class="modal-head"><div><h3>โปรไฟล์นักเรียน</h3><p>ใช้ข้อมูลนี้เพื่อให้ครูแยกนักเรียนแต่ละคนได้</p></div><button class="close" onclick="closeProfile()" aria-label="ปิด">✕</button></div>
+<div class="modal" id="profileModal"><div class="modal-card"><div class="modal-head"><div><h3>Student Profile</h3><p>This information helps the teacher identify each student.</p></div><button class="close" onclick="closeProfile()" aria-label="Close">✕</button></div>
 <form id="profileForm" onsubmit="saveProfile(event)"><div class="form-grid">
-  <div><label>รหัสนักเรียน</label><input name="studentId" required></div><div class="wide"><label>ชื่อ–นามสกุล</label><input name="name" required></div><div><label>ชั้น/ห้อง</label><input name="className" required placeholder="เช่น M1/1"></div><div><label>ระดับเริ่มต้น</label><select name="currentLevel" id="profileLevel"></select></div><div><label>รหัสชั้นเรียน</label><input name="classCode" required></div>
-</div><div class="form-actions"><button type="button" class="btn btn-outline" onclick="closeProfile()">ยกเลิก</button><button class="btn btn-primary">บันทึกโปรไฟล์</button></div></form></div></div>
+  <div><label>Student ID</label><input name="studentId" required></div><div class="wide"><label>Full Name</label><input name="name" required></div><div><label>Class</label><input name="className" required placeholder="Example: M1/1"></div><div><label>Starting Level</label><select name="currentLevel" id="profileLevel"></select></div><div><label>Class Code</label><input name="classCode" required></div>
+</div><div class="form-actions"><button type="button" class="btn btn-outline" onclick="closeProfile()">Cancel</button><button class="btn btn-primary">Save Profile</button></div></form></div></div>
 <div class="modal" id="studentDetailModal"><div class="modal-card modal-wide">
-  <div class="modal-head"><div><h3 id="studentDetailName">รายละเอียดนักเรียน</h3><p id="studentDetailMeta"></p></div><button class="close" onclick="closeStudentDetail()" aria-label="ปิด">✕</button></div>
+  <div class="modal-head"><div><h3 id="studentDetailName">Student Details</h3><p id="studentDetailMeta"></p></div><button class="close" onclick="closeStudentDetail()" aria-label="Close">✕</button></div>
   <div id="studentDetailMetrics" class="grid metric-grid detail-metrics"></div>
   <div class="grid two-col detail-layout">
     <div class="card inner-card"><div class="chart-box small"><canvas id="studentDetailChart"></canvas></div></div>
-    <div class="card inner-card"><h4>บันทึกช่วยเหลือของครู</h4><form id="teacherNoteForm" onsubmit="saveTeacherNote(event)"><input type="hidden" name="studentKey"><label>สถานะการติดตาม</label><select name="status"><option value="">ยังไม่กำหนด</option><option value="monitor">ติดตาม</option><option value="contacted">ติดต่อแล้ว</option><option value="supporting">กำลังช่วยเหลือ</option><option value="resolved">เรียบร้อย</option></select><label>คำแนะนำ/บันทึก</label><textarea name="note" maxlength="1000" placeholder="บันทึกสำหรับครู ไม่แสดงให้นักเรียนเห็น"></textarea><label>ขั้นตอนถัดไป</label><input name="nextAction" maxlength="250" placeholder="เช่น นัดพูดคุยวันศุกร์"><div class="form-actions"><button class="btn btn-primary">บันทึกคำแนะนำ</button></div></form></div>
+    <div class="card inner-card"><h4>Teacher Support Notes</h4><form id="teacherNoteForm" onsubmit="saveTeacherNote(event)"><input type="hidden" name="studentKey"><label>Follow-up Status</label><select name="status"><option value="">Not set</option><option value="monitor">Monitor</option><option value="contacted">Contacted</option><option value="supporting">Providing support</option><option value="resolved">Resolved</option></select><label>Guidance or Notes</label><textarea name="note" maxlength="1000" placeholder="Private teacher notes. Students cannot see this text."></textarea><label>Next Action</label><input name="nextAction" maxlength="250" placeholder="Example: Schedule a meeting on Friday"><div class="form-actions"><button class="btn btn-primary">Save Guidance</button></div></form></div>
   </div>
-  <div class="section-head"><div><h3>กิจกรรมล่าสุด</h3><p>แสดงสูงสุด 20 รายการ</p></div></div>
-  <div class="table-wrap"><table><thead><tr><th>วันที่</th><th>ระดับ</th><th>เว็บไซต์</th><th>กิจกรรม</th><th>นาที</th><th>คะแนน</th><th>Reflection</th></tr></thead><tbody id="studentDetailLogs"></tbody></table></div>
+  <div class="section-head"><div><h3>Recent Activities</h3><p>Showing up to 20 entries.</p></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Date</th><th>Level</th><th>Website</th><th>Activity</th><th>Minutes</th><th>Score</th><th>Reflection</th></tr></thead><tbody id="studentDetailLogs"></tbody></table></div>
 </div></div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>

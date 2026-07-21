@@ -1,65 +1,62 @@
-# English 6-Level Learning Journey
+# English 6-Level Learning Journey — Version 5 English
 
-แดชบอร์ดแผนเรียน 6 เดือนสำหรับนักเรียน พร้อมหน้าครูดูสถิติรวม
+A six-month student learning dashboard with a teacher progress tracker. The entire interface, notifications, charts, forms, and backend error messages are in English.
 
-## ใช้งานบน GitHub Pages
+## Main Features
 
-1. สร้าง GitHub Repository
-2. อัปโหลดไฟล์ทั้งหมด
-3. ไปที่ **Settings → Pages**
-4. เลือก **Deploy from a branch**
-5. เลือก `main` และ `/ (root)`
-6. กด **Save**
+- Six-level English learning roadmap
+- Read Along by Google: Levels 1–4
+- ELLO: Levels 1–6
+- British Council LearnEnglish Teens: Levels 1–6
+- Weekly study goals, streaks, learning calendar, and achievement badges
+- Editable student learning logs
+- Teacher announcements and class goals
+- Individual student detail view and private teacher support notes
+- CSV export, JSON backup, print/PDF reports, dark mode, and PWA installation
 
-เว็บไซต์เปิดได้ทันทีในโหมดทดลอง และข้อมูลจะอยู่ในเบราว์เซอร์ของนักเรียนแต่ละเครื่อง
+## Publish with GitHub Pages
 
-## ให้ครูติดตามข้อมูลนักเรียนทุกคน
+1. Create or open your GitHub repository.
+2. Upload the website files.
+3. Open **Settings → Pages**.
+4. Choose **Deploy from a branch**.
+5. Select the `main` branch and `/ (root)`.
+6. Click **Save**.
 
-GitHub Pages เป็นเว็บแบบ Static จึงต้องใช้ Google Sheets เป็นฐานข้อมูลกลาง
+The website opens immediately in demo mode. In demo mode, each student's data remains only in that browser.
 
-1. เปิด `script.google.com` และสร้างโปรเจกต์
-2. คัดลอก `backend/Code.gs` ไปใส่
-3. เปลี่ยน `CLASS_CODE` และ `TEACHER_PIN`
-4. เลือกฟังก์ชัน `setup` แล้วกด Run เพื่อสร้าง Google Sheets
-5. Deploy → New deployment → Web app
-6. Execute as: **Me**
-7. Who has access: **Anyone**
-8. คัดลอก URL ที่ลงท้าย `/exec`
-9. เปิด `config.js` ใน GitHub แล้วใส่ URL ใน `API_URL`
-10. ตั้ง `CLASS_CODE` ให้ตรงกับ Code.gs แล้ว Commit
+## Connect the Shared Google Sheets Database
 
-## หมายเหตุ
+GitHub Pages is static, so Google Apps Script and Google Sheets provide the shared database.
 
-ระดับทั้ง 6 เป็นขั้นกิจกรรมของโครงการ ไม่ใช่การรับรอง CEFR และไม่ควรคาดหวังว่านักเรียนทุกคนจะถึง C1 ภายใน 6 เดือน
-Teacher PIN เป็นการป้องกันแบบพื้นฐาน ไม่ควรเก็บข้อมูลอ่อนไหวในระบบนี้
+1. Open `script.google.com` and create or open the existing project.
+2. Copy `backend/Code.gs` into the Apps Script editor.
+3. Restore your existing `CLASS_CODE` and `TEACHER_PIN`.
+4. Select `upgradeV5` and click **Run** once.
+5. Choose **Deploy → Manage deployments**.
+6. Edit the existing web-app deployment.
+7. Select **New version**, then click **Deploy**.
+8. Continue using the same `/exec` URL.
 
+For a new installation, run `setup` before deploying the web app. Set **Execute as: Me** and **Who has access: Anyone** when your Google Workspace policy allows it.
 
-## ฟีเจอร์ Version 2
+## Configuration
 
-- เป้าหมายเวลาเรียนรายสัปดาห์
-- Study streak
-- กราฟเทียบเวลาเรียนจริงกับเป้าหมาย
-- นำเข้าข้อมูลสำรอง JSON
-- หน้าครูแสดง Active / Watch / Needs support ชัดเจน
-- ตัวกรองตามสถานะและเรียงผู้ที่ต้องติดตามก่อน
-- การ์ดเวลาเฉลี่ยต่อนักเรียน
-- สีเน้นแถวที่ต้องช่วยเหลือ
+Keep your working values in `config.js`:
 
+```javascript
+window.APP_CONFIG = {
+  API_URL: "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec",
+  CLASS_CODE: "YOUR_CLASS_CODE",
+  APP_TITLE: "English 6-Level Learning Journey",
+  SCHOOL_NAME: "Your School"
+};
+```
 
-## ฟีเจอร์ Version 4
+`CLASS_CODE` must exactly match the value in `Code.gs`.
 
-- ครูตั้งประกาศประจำชั้นและเป้าหมายรายสัปดาห์จากหน้า Teacher Dashboard
-- นักเรียนแก้ไขหรือลบบันทึกการเรียนของตนเอง
-- ครูเปิดดูกราฟและประวัติของนักเรียนรายคน
-- ครูบันทึกสถานะการติดตาม คำแนะนำ และขั้นตอนถัดไป
-- ติดตั้งเป็นเว็บแอปบนคอมพิวเตอร์หรือโทรศัพท์ได้ (PWA)
-- ใช้ Google Sheets เดิมได้ ระบบเพิ่มคอลัมน์และชีตใหม่โดยไม่ลบข้อมูลเก่า
+## Important Notes
 
-## การอัปเกรด Backend เป็น V4
-
-1. สำรอง `CLASS_CODE` และ `TEACHER_PIN` เดิม
-2. นำ `backend/Code.gs` ของ V4 ไปแทนโค้ดเดิม
-3. ใส่ `CLASS_CODE` และ `TEACHER_PIN` เดิมกลับเข้าไป
-4. Save แล้วเลือกฟังก์ชัน `upgradeV4` กด Run หนึ่งครั้ง
-5. Deploy → Manage deployments → Edit → New version → Deploy
-6. ใช้ URL `/exec` เดิมได้ ไม่ต้องแก้ `config.js`
+- The six levels are project learning stages, not official CEFR certification.
+- The teacher PIN provides only basic access control. Do not store highly sensitive personal information in this system.
+- Existing student, log, settings, and teacher-note data remain compatible with Version 5.

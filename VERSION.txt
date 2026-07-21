@@ -1,2 +1,2 @@
-Version 4.0
-Class announcements, teacher-set weekly goal, student log editing/deletion, student drill-down, teacher notes, and PWA install.
+Version 5.0 English
+All user-facing text, charts, notifications, forms, documentation, and backend error messages are in English.
