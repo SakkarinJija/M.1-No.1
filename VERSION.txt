@@ -1,2 +1,2 @@
-Version 6.0
-Learning and assessment upgrade: weekly assignments, six-skill evidence, baseline/post assessment, teacher verification, accessibility improvements, audit logging, soft deletion, and temporary teacher sessions.
+Version 7.0 — Pilot-Ready Classroom
+Protected student accounts, teacher assignment review, safer service-worker routing, clearer sync status, and improved modal accessibility.

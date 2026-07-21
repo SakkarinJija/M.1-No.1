@@ -2,6 +2,7 @@ const CLASS_CODE='ENGLISH6';
 const TEACHER_PIN='2468';
 const DATA_FILE_NAME='English 6-Level Learning Journey Data';
 const TEACHER_SESSION_SECONDS=1800;
+const STUDENT_SESSION_SECONDS=14400;
 const SKILLS=['Listening','Speaking','Reading','Writing','Vocabulary','Grammar'];
 
 function doGet(e){
@@ -10,13 +11,17 @@ function doGet(e){
   let r;
   try{
     const actions={
-      ping:()=>({ok:true,version:6}),
+      ping:()=>({ok:true,version:7}),
       registerStudent:()=>registerStudent_(p),
+      createStudentAccount:()=>createStudentAccount_(p),
+      resetStudentAccess:()=>resetStudentAccess_(p),
+      studentLogout:()=>studentLogout_(p),
       submitLog:()=>submitLog_(p),
       updateLog:()=>updateLog_(p),
       deleteLog:()=>deleteLog_(p),
       studentData:()=>studentData_(p),
       teacherLogin:()=>teacherLogin_(p),
+      teacherLogout:()=>teacherLogout_(p),
       teacherData:()=>teacherData_(p),
       studentDetail:()=>studentDetail_(p),
       saveTeacherNote:()=>saveTeacherNote_(p),
@@ -25,7 +30,8 @@ function doGet(e){
       saveAssignment:()=>saveAssignment_(p),
       submitAssignment:()=>submitAssignment_(p),
       saveAssessment:()=>saveAssessment_(p),
-      verifyLog:()=>verifyLog_(p)
+      verifyLog:()=>verifyLog_(p),
+      reviewSubmission:()=>reviewSubmission_(p)
     };
     const fn=actions[p.action||'ping'];
     r=fn?fn():{ok:false,error:'Unknown action.'};
@@ -34,24 +40,38 @@ function doGet(e){
 }
 
 function setup(){const ss=getDb_();Logger.log(ss.getUrl());}
-function upgradeV6(){const ss=getDb_();backfillLogIds_(ss.getSheetByName('Logs'));PropertiesService.getScriptProperties().setProperty('V6_READY','1');Logger.log('Version 6 is ready: '+ss.getUrl());}
-function upgradeV5(){return upgradeV6();}
-function upgradeV4(){return upgradeV6();}
+function upgradeV7(){const ss=getDb_();backfillLogIds_(ss.getSheetByName('Logs'));PropertiesService.getScriptProperties().setProperty('V7_READY','1');Logger.log('Version 7 is ready: '+ss.getUrl());}
+function upgradeV6(){return upgradeV7();}
+function upgradeV5(){return upgradeV7();}
+function upgradeV4(){return upgradeV7();}
 
 function registerStudent_(p){
-  verify_(p.classCode);
+  verify_(p.classCode);validateAccessCode_(p.accessCode);
   if(!p.studentId||!p.name||!p.className)throw Error('Please complete all required profile fields.');
-  const ss=getDb_(),sh=ss.getSheetByName('Students'),rows=objects_(sh);
-  const old=rows.find(r=>String(r.StudentId)===String(p.studentId)&&String(r.ClassName)===String(p.className));
-  const key=old?old.StudentKey:Utilities.getUuid();
-  const values={CreatedAt:old&&old.CreatedAt?old.CreatedAt:new Date(),StudentKey:key,StudentId:String(p.studentId).slice(0,80),Name:String(p.name).slice(0,150),ClassName:String(p.className).slice(0,80),CurrentLevel:clamp_(p.currentLevel,1,6,1),LastUpdated:new Date()};
-  old?updateObjectRow_(sh,old._row,values):appendObject_(sh,values);
-  audit_(ss,'student:'+key,'PROFILE_SAVED',key,p.studentId);
-  return{ok:true,profile:profile_(values)};
+  const ss=getDb_(),sh=ss.getSheetByName('Students'),rows=objects_(sh),old=rows.find(r=>String(r.StudentId)===String(p.studentId)&&String(r.ClassName)===String(p.className));
+  if(!old)throw Error('Student account not found. Ask your teacher to create the account first.');
+  const cache=CacheService.getScriptCache(),client=String(p.clientId||'anonymous').replace(/[^\w-]/g,'').slice(0,80),failKey='student_fail_'+client+'_'+String(p.studentId).replace(/[^\w-]/g,'').slice(0,40),attempts=Number(cache.get(failKey)||0);if(attempts>=8)throw Error('Too many incorrect attempts. Try again in 10 minutes.');
+  const suppliedHash=hashAccessCode_(p.accessCode),legacySameDevice=!old.AccessCodeHash&&String(p.studentKey||'')===String(old.StudentKey);
+  if(old.AccessCodeHash&&suppliedHash!==old.AccessCodeHash){cache.put(failKey,String(attempts+1),600);throw Error('Incorrect personal access code.');}
+  if(!old.AccessCodeHash&&!legacySameDevice)throw Error('This legacy account needs a teacher access-code reset before it can be used on this device.');
+  cache.remove(failKey);const values={CreatedAt:old.CreatedAt||new Date(),StudentKey:old.StudentKey,StudentId:String(p.studentId).slice(0,80),Name:String(p.name).slice(0,150),ClassName:String(p.className).slice(0,80),CurrentLevel:Number(old.CurrentLevel)||1,LastUpdated:new Date(),AccessCodeHash:old.AccessCodeHash||suppliedHash,AccessCodeUpdatedAt:old.AccessCodeUpdatedAt||new Date()};
+  updateObjectRow_(sh,old._row,values);const token=createStudentToken_(old.StudentKey,values.AccessCodeHash);audit_(ss,'student:'+old.StudentKey,'PROFILE_SIGNED_IN',old.StudentKey,p.studentId);return{ok:true,profile:profile_(values),studentToken:token,expiresIn:STUDENT_SESSION_SECONDS};
 }
 
+
+function createStudentAccount_(p){
+  teacherVerify_(p);validateAccessCode_(p.accessCode);if(!p.studentId||!p.name||!p.className)throw Error('Student ID, name, and class are required.');
+  const ss=getDb_(),sh=ss.getSheetByName('Students'),rows=objects_(sh),old=rows.find(r=>String(r.StudentId)===String(p.studentId)&&String(r.ClassName)===String(p.className));if(old)throw Error('A student account with this ID and class already exists.');
+  const key=Utilities.getUuid(),values={CreatedAt:new Date(),StudentKey:key,StudentId:String(p.studentId).slice(0,80),Name:String(p.name).slice(0,150),ClassName:String(p.className).slice(0,80),CurrentLevel:clamp_(p.currentLevel,1,6,1),LastUpdated:new Date(),AccessCodeHash:hashAccessCode_(p.accessCode),AccessCodeUpdatedAt:new Date()};appendObject_(sh,values);audit_(ss,'teacher','STUDENT_ACCOUNT_CREATED',key,p.studentId);return{ok:true,profile:profile_(values)};
+}
+function resetStudentAccess_(p){
+  teacherVerify_(p);validateAccessCode_(p.accessCode);if(!p.studentKey)throw Error('Student not found.');const ss=getDb_(),sh=ss.getSheetByName('Students'),old=objects_(sh).find(r=>r.StudentKey===p.studentKey);if(!old)throw Error('Student not found.');updateObjectRow_(sh,old._row,{AccessCodeHash:hashAccessCode_(p.accessCode),AccessCodeUpdatedAt:new Date(),LastUpdated:new Date()});audit_(ss,'teacher','STUDENT_ACCESS_RESET',p.studentKey,'');return{ok:true};
+}
+
+function studentLogout_(p){verify_(p.classCode);const token=String(p.studentToken||'');if(token)CacheService.getScriptCache().remove('student_token_'+token);return{ok:true};}
+
 function submitLog_(p){
-  verify_(p.classCode);validateLog_(p);
+  studentVerify_(p);validateLog_(p);
   const ss=getDb_(),students=objects_(ss.getSheetByName('Students')),st=students.find(r=>r.StudentKey===p.studentKey);
   if(!st)throw Error('Student profile not found.');
   const sh=ss.getSheetByName('Logs'),logs=activeLogs_(ss);
@@ -66,7 +86,7 @@ function submitLog_(p){
 }
 
 function updateLog_(p){
-  verify_(p.classCode);validateLog_(p);if(!p.logId)throw Error('Log ID not found.');
+  studentVerify_(p);validateLog_(p);if(!p.logId)throw Error('Log ID not found.');
   const ss=getDb_(),sh=ss.getSheetByName('Logs'),row=objects_(sh).find(r=>r.LogId===p.logId&&r.StudentKey===p.studentKey&&!r.DeletedAt);
   if(!row)throw Error('The learning log to edit was not found.');
   updateObjectRow_(sh,row._row,{Date:p.date,Level:clamp_(p.level,1,6,1),Source:normalizeSource_(p.source),Activity:String(p.activity||'').trim().slice(0,250),Minutes:clamp_(p.minutes,1,300,30),Completed:clamp_(p.completed,0,100,0),Score:scoreOrBlank_(p.score),Confidence:confidenceOrBlank_(p.confidence),Evidence:String(p.evidence||'').slice(0,500),Reflection:String(p.reflection||'').slice(0,1500),Skill:validSkill_(p.skill),VerificationStatus:'Pending',VerifiedAt:'',UpdatedAt:new Date()});
@@ -75,7 +95,7 @@ function updateLog_(p){
 }
 
 function deleteLog_(p){
-  verify_(p.classCode);if(!p.studentKey||!p.logId)throw Error('Required information is missing.');
+  studentVerify_(p);if(!p.studentKey||!p.logId)throw Error('Required information is missing.');
   const ss=getDb_(),sh=ss.getSheetByName('Logs'),row=objects_(sh).find(r=>r.LogId===p.logId&&r.StudentKey===p.studentKey&&!r.DeletedAt);
   if(!row)throw Error('The learning log to delete was not found.');
   updateObjectRow_(sh,row._row,{DeletedAt:new Date(),UpdatedAt:new Date()});
@@ -90,8 +110,8 @@ function validateLog_(p){
 }
 
 function studentData_(p){
-  verify_(p.classCode);const ss=getDb_(),st=objects_(ss.getSheetByName('Students')).find(r=>r.StudentKey===p.studentKey);if(!st)throw Error('Student not found.');
-  return{ok:true,version:6,profile:profile_(st),logs:activeLogs_(ss).filter(r=>r.StudentKey===p.studentKey).slice(-500).map(clean_),classInfo:getClassInfo_(ss),assignments:activeAssignments_(ss).map(clean_),submissions:objects_(ss.getSheetByName('Submissions')).filter(r=>r.StudentKey===p.studentKey).map(clean_),assessments:objects_(ss.getSheetByName('Assessments')).filter(r=>r.StudentKey===p.studentKey).map(clean_)};
+  studentVerify_(p);const ss=getDb_(),st=objects_(ss.getSheetByName('Students')).find(r=>r.StudentKey===p.studentKey);if(!st)throw Error('Student not found.');
+  return{ok:true,version:7,profile:profile_(st),logs:activeLogs_(ss).filter(r=>r.StudentKey===p.studentKey).slice(-500).map(clean_),classInfo:getClassInfo_(ss),assignments:activeAssignments_(ss).map(clean_),submissions:objects_(ss.getSheetByName('Submissions')).filter(r=>r.StudentKey===p.studentKey).map(clean_),assessments:objects_(ss.getSheetByName('Assessments')).filter(r=>r.StudentKey===p.studentKey).map(clean_)};
 }
 
 function teacherLogin_(p){
@@ -104,6 +124,8 @@ function teacherLogin_(p){
   return{ok:true,token,expiresIn:TEACHER_SESSION_SECONDS};
 }
 
+function teacherLogout_(p){verify_(p.classCode);const token=String(p.token||'');if(token)CacheService.getScriptCache().remove('teacher_token_'+token);return{ok:true};}
+
 function teacherData_(p){
   teacherVerify_(p);const ss=getDb_(),students=objects_(ss.getSheetByName('Students')),logs=activeLogs_(ss),map={};
   logs.forEach(l=>(map[l.StudentKey]||(map[l.StudentKey]=[])).push(l));
@@ -112,7 +134,7 @@ function teacherData_(p){
     return{studentKey:s.StudentKey,studentId:s.StudentId,name:s.Name,className:s.ClassName,currentLevel:Number(s.CurrentLevel)||1,minutes,activities,avgScore:Math.round(avg*10)/10,lastActive:last,weekMinutes:weekMinutes_(rows),activeDays30:activeDays_(rows,30),streak:streak_(rows),sessions30:sessionsWithin_(rows,30),verifiedCount:rows.filter(x=>String(x.VerificationStatus).toLowerCase()==='verified').length};
   });
   const src={'Read Along':0,'ELLO':0,'LearnEnglish Teens':0};logs.forEach(x=>{const name=normalizeSource_(x.Source);if(src[name]!==undefined)src[name]+=Number(x.Minutes)||0;});
-  return{ok:true,version:6,generatedAt:new Date().toISOString(),students:out,weekly:weekly_(logs,12),sourceUsage:src,classInfo:getClassInfo_(ss),assignments:objects_(ss.getSheetByName('Assignments')).map(clean_),submissions:objects_(ss.getSheetByName('Submissions')).map(clean_),assessmentSummary:assessmentSummary_(ss,students)};
+  return{ok:true,version:7,generatedAt:new Date().toISOString(),students:out,weekly:weekly_(logs,12),sourceUsage:src,classInfo:getClassInfo_(ss),assignments:objects_(ss.getSheetByName('Assignments')).map(clean_),submissions:objects_(ss.getSheetByName('Submissions')).map(clean_),assessmentSummary:assessmentSummary_(ss,students)};
 }
 
 function studentDetail_(p){
@@ -139,10 +161,15 @@ function saveAssignment_(p){
 }
 
 function submitAssignment_(p){
-  verify_(p.classCode);if(!p.studentKey||!p.assignmentId||!String(p.reflection||'').trim())throw Error('Please add a reflection before submitting.');
+  studentVerify_(p);if(!p.studentKey||!p.assignmentId||!String(p.reflection||'').trim())throw Error('Please add a reflection before submitting.');
   const ss=getDb_(),assignment=objects_(ss.getSheetByName('Assignments')).find(r=>r.AssignmentId===p.assignmentId&&String(r.Active).toUpperCase()!=='FALSE');if(!assignment)throw Error('Assignment not found or no longer active.');
   const sh=ss.getSheetByName('Submissions'),old=objects_(sh).find(r=>r.AssignmentId===p.assignmentId&&r.StudentKey===p.studentKey),values={SubmittedAt:old&&old.SubmittedAt?old.SubmittedAt:new Date(),AssignmentId:p.assignmentId,StudentKey:p.studentKey,EvidenceUrl:String(p.evidenceUrl||'').slice(0,500),Reflection:String(p.reflection).slice(0,1000),Status:'Submitted',TeacherFeedback:old?old.TeacherFeedback||'':'',Score:old?old.Score||'':'',UpdatedAt:new Date()};
   old?updateObjectRow_(sh,old._row,values):appendObject_(sh,values);audit_(ss,'student:'+p.studentKey,'ASSIGNMENT_SUBMITTED',p.assignmentId,assignment.Title||'');return{ok:true,submission:clean_(values)};
+}
+
+
+function reviewSubmission_(p){
+  teacherVerify_(p);if(!p.assignmentId||!p.studentKey)throw Error('Submission information is incomplete.');const allowed=['Submitted','Needs revision','Approved'],status=allowed.indexOf(String(p.status))>=0?String(p.status):'Submitted',score=scoreOrBlank_(p.score),feedback=String(p.teacherFeedback||'').slice(0,1000);const ss=getDb_(),sh=ss.getSheetByName('Submissions'),old=objects_(sh).find(r=>r.AssignmentId===p.assignmentId&&r.StudentKey===p.studentKey);if(!old)throw Error('Submission not found.');const values={Status:status,TeacherFeedback:feedback,Score:score,UpdatedAt:new Date()};updateObjectRow_(sh,old._row,values);audit_(ss,'teacher','SUBMISSION_REVIEWED',p.assignmentId,p.studentKey+':'+status);return{ok:true,review:clean_(values)};
 }
 
 function saveAssessment_(p){
@@ -165,6 +192,12 @@ function assessmentSummary_(ss,students){
 function activeAssignments_(ss){return objects_(ss.getSheetByName('Assignments')).filter(r=>String(r.Active||'TRUE').toUpperCase()!=='FALSE');}
 function activeLogs_(ss){return objects_(ss.getSheetByName('Logs')).filter(r=>!r.DeletedAt);}
 function profile_(st){return{studentKey:st.StudentKey,studentId:st.StudentId,name:st.Name,className:st.ClassName,currentLevel:Number(st.CurrentLevel)||1,classCode:CLASS_CODE};}
+
+
+function createStudentToken_(studentKey,accessHash){const token=Utilities.getUuid().replace(/-/g,''),signature=String(accessHash||'').slice(0,16);CacheService.getScriptCache().put('student_token_'+token,String(studentKey)+'|'+signature,STUDENT_SESSION_SECONDS);return token;}
+function studentVerify_(p){verify_(p.classCode);const token=String(p.studentToken||''),studentKey=String(p.studentKey||''),cache=CacheService.getScriptCache(),stored=token?String(cache.get('student_token_'+token)||''):'';if(!token||!studentKey||stored.split('|')[0]!==studentKey)throw Error('Your student session has expired. Open Profile and sign in again.');const ss=getDb_(),student=objects_(ss.getSheetByName('Students')).find(r=>r.StudentKey===studentKey),signature=String(student?.AccessCodeHash||'').slice(0,16);if(!student||stored!==studentKey+'|'+signature){cache.remove('student_token_'+token);throw Error('Your student session has expired. Open Profile and sign in again.');}cache.put('student_token_'+token,stored,STUDENT_SESSION_SECONDS);return true;}
+function validateAccessCode_(value){const code=String(value||'');if(code.length<6||code.length>24)throw Error('The personal access code must contain 6–24 characters.');}
+function hashAccessCode_(value){const props=PropertiesService.getScriptProperties();let salt=props.getProperty('ACCESS_SALT');if(!salt){salt=Utilities.getUuid()+Utilities.getUuid();props.setProperty('ACCESS_SALT',salt);}const bytes=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,String(value)+'|'+salt,Utilities.Charset.UTF_8);return bytes.map(b=>(b+256)%256).map(b=>('0'+b.toString(16)).slice(-2)).join('');}
 
 function teacherVerify_(p){
   verify_(p.classCode);const token=String(p.token||''),cache=CacheService.getScriptCache();
@@ -190,7 +223,7 @@ function sum_(rows,fn){return rows.reduce((total,row)=>total+fn(row),0);}
 
 function getDb_(){
   const pr=PropertiesService.getScriptProperties();let id=pr.getProperty('DB_ID'),ss;try{if(id)ss=SpreadsheetApp.openById(id);}catch(error){}if(!ss){ss=SpreadsheetApp.create(DATA_FILE_NAME);pr.setProperty('DB_ID',ss.getId());}
-  ensureHeaders_(ss,'Students',['CreatedAt','StudentKey','StudentId','Name','ClassName','CurrentLevel','LastUpdated']);
+  ensureHeaders_(ss,'Students',['CreatedAt','StudentKey','StudentId','Name','ClassName','CurrentLevel','LastUpdated','AccessCodeHash','AccessCodeUpdatedAt']);
   ensureHeaders_(ss,'Logs',['CreatedAt','StudentKey','Date','Level','Source','Activity','Minutes','Completed','Score','Confidence','Evidence','Reflection','LogId','Skill','VerificationStatus','VerifiedAt','DeletedAt','UpdatedAt']);
   ensureHeaders_(ss,'TeacherNotes',['UpdatedAt','StudentKey','TeacherNote','Status','NextAction']);
   ensureHeaders_(ss,'Settings',['Key','Value','UpdatedAt']);

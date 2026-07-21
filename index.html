@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173e79">
-<title>English 6-Level Learning Journey · V6 Learning & Assessment</title>
+<title>English 6-Level Learning Journey · V7 Pilot-Ready Classroom</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="styles.css">
@@ -13,7 +13,7 @@
 <a class="skip-link" href="#mainContent">Skip to main content</a>
 <header class="topbar">
   <div class="brand">
-    <div class="brand-mark">V6</div>
+    <div class="brand-mark">V7</div>
     <div><h1 id="appTitle">English 6-Level Learning Journey</h1><small id="schoolName">Student progress dashboard</small></div>
   </div>
   <div class="top-actions">
@@ -37,14 +37,15 @@
   <button class="nav-btn" data-page="roadmap" onclick="showPage('roadmap')"><span class="nav-icon">◫</span>6 Levels</button>
   <div class="nav-title teacher-nav-title">Teacher</div>
   <button class="nav-btn" data-page="teacher" onclick="showPage('teacher')"><span class="nav-icon">▥</span>Class Tracker</button>
-  <div class="sidebar-note"><strong>Version 6 · Learning & Assessment</strong><br>Assignments, skill evidence, assessments, accessibility, and safer teacher sessions.</div>
+  <div class="sidebar-note"><strong>Version 7 · Pilot-Ready Classroom</strong><br>Protected student accounts, assignment review, skill evidence, assessments, and safer offline behaviour.</div>
 </aside>
 <main id="mainContent" tabindex="-1">
 <div class="setup-banner" id="setupBanner">Demo mode is active. Data is stored only in this browser. To let the teacher track every student, connect Google Apps Script by following the README.</div>
+<div class="sync-notice hidden" id="syncNotice" role="status" aria-live="polite"></div>
 
 <section id="dashboard" class="page active">
   <div class="hero">
-    <div class="hero-content"><span class="eyebrow">6-MONTH LEARNING JOURNEY · VERSION 6</span><h2 id="welcomeText">Welcome, learner! 👋</h2><p>Build your English step by step with three core learning websites. Record study time, scores, evidence, and consistency to see real progress.</p></div>
+    <div class="hero-content"><span class="eyebrow">6-MONTH LEARNING JOURNEY · VERSION 7</span><h2 id="welcomeText">Welcome, learner! 👋</h2><p>Build your English step by step with three core learning websites. Record study time, scores, evidence, and consistency to see real progress.</p></div>
     <div class="hero-side"><div id="todayText" class="hero-date"></div><span id="modeBadge" class="mode-badge">Loading…</span></div>
   </div>
 
@@ -84,7 +85,7 @@
   <div class="card form-card"><form id="logForm" onsubmit="submitLog(event)"><input type="hidden" name="logId"><div class="form-grid">
     <div><label>Date</label><input type="date" name="date" required></div>
     <div><label>Level</label><select name="level" id="logLevel" required></select></div>
-    <div><label>Website</label><select name="source" required><option value="Read Along">Read Along</option><option value="ELLLO">ELLO</option><option value="LearnEnglish Teens">LearnEnglish Teens</option></select></div>
+    <div><label>Website</label><select name="source" required><option value="Read Along">Read Along</option><option value="ELLO">ELLO</option><option value="LearnEnglish Teens">LearnEnglish Teens</option></select></div>
     <div><label>Primary Skill</label><select name="skill" id="logSkill" required><option value="">Select a skill</option><option>Listening</option><option>Speaking</option><option>Reading</option><option>Writing</option><option>Vocabulary</option><option>Grammar</option></select></div>
     <div><label>Study Time (minutes)</label><input type="number" name="minutes" min="1" max="300" value="30" required></div>
     <div class="wide"><label>Lesson or Activity Name</label><input name="activity" placeholder="Example: ELLO A1 — My Family" required></div>
@@ -105,7 +106,7 @@
 </section>
 
 <section id="skills" class="page">
-  <div class="section-head"><div><h3>Skill Development</h3><p>Track evidence across six English skills. Teacher-verified evidence is shown separately.</p></div></div>
+  <div class="section-head"><div><h3>Skill Development</h3><p>Practice evidence is based on learning logs. Teacher assessments are shown separately and should be used for formal progress decisions.</p></div></div>
   <div id="skillMatrix" class="skill-matrix"></div>
   <div class="section-head"><div><h3>Assessment Growth</h3><p>Compare baseline, progress, and post-assessment results. These scores should be entered by the teacher.</p></div></div>
   <div class="grid two-col">
@@ -117,7 +118,7 @@
 <section id="roadmap" class="page"><div class="section-head"><div><h3>6-Month Roadmap · 6 Levels</h3><p>The levels are project development stages, not official CEFR certification.</p></div></div><div class="roadmap-grid" id="roadmapGrid"></div></section>
 
 <section id="teacher" class="page">
-  <div id="teacherLogin" class="card teacher-login"><div class="section-head login-head"><div><h3>Teacher Dashboard</h3><p>Enter the teacher PIN. Version 6 creates a short-lived teacher session instead of sending the PIN with every request.</p></div></div><form onsubmit="teacherLoginHandler(event)"><label>Teacher PIN</label><input type="password" id="teacherPin" required autocomplete="current-password"><div class="form-actions"><button class="btn btn-primary">Open Teacher Dashboard</button></div></form></div>
+  <div id="teacherLogin" class="card teacher-login"><div class="section-head login-head"><div><h3>Teacher Dashboard</h3><p>Enter the teacher PIN. Version 7 uses short-lived teacher and student sessions. Student accounts must be created or recovered by the teacher.</p></div></div><form onsubmit="teacherLoginHandler(event)"><label>Teacher PIN</label><input type="password" id="teacherPin" required autocomplete="current-password"><div class="form-actions"><button class="btn btn-primary">Open Teacher Dashboard</button></div></form></div>
   <div id="teacherLayout" class="teacher-layout">
     <div class="section-head"><div><h3>Teacher Workspace</h3><p>Assignments, skill evidence, assessments, support, and reports in one place.</p><small id="teacherUpdatedAt" class="updated-at"></small></div><div class="filter-row"><select id="teacherClassFilter" onchange="renderTeacher()"><option value="">All Classes</option></select><button class="btn btn-outline" onclick="refreshTeacher()">↻ Refresh</button><button class="btn btn-soft" onclick="exportTeacherCsv()">CSV</button><button class="btn btn-soft" onclick="printReport()">🖨 Print</button><button class="btn btn-outline" onclick="teacherLogout()">Log Out</button></div></div>
 
@@ -138,13 +139,16 @@
     </div>
 
     <div class="teacher-panel" data-teacher-panel="students">
-      <div class="section-head"><div><h3>Students</h3><p>Open a student record to verify evidence, enter assessments, and add support notes.</p></div><div class="filter-row"><select id="teacherStatusFilter" onchange="renderTeacherTable()"><option value="">All Statuses</option><option value="active">Active</option><option value="watch">Watch</option><option value="support">Needs support</option></select><input id="studentSearch" placeholder="Search by name or ID…" oninput="renderTeacherTable()"></div></div>
+      <div class="card account-create-card"><div class="card-title-row"><div><h4>Create a Student Account</h4><p>Create the account before the student signs in. Give the temporary access code privately to the student.</p></div><span class="badge badge-blue">Protected account</span></div>
+        <form id="studentAccountForm" onsubmit="createStudentAccount(event)"><div class="form-grid compact-grid"><div><label>Student ID</label><input name="studentId" required maxlength="80"></div><div class="wide"><label>Full Name</label><input name="name" required maxlength="150"></div><div><label>Class</label><input name="className" required maxlength="80" placeholder="Example: M1/1"></div><div><label>Starting Level</label><select name="currentLevel"><option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option><option value="4">Level 4</option><option value="5">Level 5</option><option value="6">Level 6</option></select></div><div><label>Temporary Access Code</label><input type="password" name="accessCode" minlength="6" maxlength="24" required autocomplete="new-password"></div></div><div class="form-actions"><button type="reset" class="btn btn-outline">Clear</button><button class="btn btn-primary">Create Account</button></div></form>
+      </div>
+      <div class="section-head"><div><h3>Students</h3><p>Open a student record to verify evidence, enter assessments, reset access, and add support notes.</p></div><div class="filter-row"><select id="teacherStatusFilter" onchange="renderTeacherTable()"><option value="">All Statuses</option><option value="active">Active</option><option value="watch">Watch</option><option value="support">Needs support</option></select><input id="studentSearch" placeholder="Search by name or ID…" oninput="renderTeacherTable()"></div></div>
       <div class="table-wrap"><table><caption class="sr-only">Student progress and activity summary</caption><thead><tr><th>Student</th><th>Class</th><th>Level</th><th>This Week</th><th>Study Days</th><th>Verified Evidence</th><th>Average Score</th><th>Last Active</th><th>Status</th><th>Details</th></tr></thead><tbody id="teacherStudentTable"></tbody></table></div>
     </div>
 
     <div class="teacher-panel" data-teacher-panel="assignments">
       <div class="grid two-col teacher-work-grid">
-        <div class="card"><div class="card-title-row"><div><h4>Create or Edit an Assignment</h4><p>Use a clear objective, deadline, evidence requirement, and success criteria.</p></div><span class="badge badge-blue">V6</span></div>
+        <div class="card"><div class="card-title-row"><div><h4>Create or Edit an Assignment</h4><p>Use a clear objective, deadline, evidence requirement, and success criteria.</p></div><span class="badge badge-blue">V7</span></div>
           <form id="assignmentForm" onsubmit="saveAssignment(event)"><input type="hidden" name="assignmentId"><div class="form-grid compact-grid">
             <div class="full"><label>Assignment Title</label><input name="title" required maxlength="120"></div>
             <div class="full"><label>Learning Objective</label><textarea name="objective" required maxlength="500"></textarea></div>
@@ -161,6 +165,8 @@
         </div>
         <div class="card"><div class="card-title-row"><div><h4>Assignment List</h4><p>Review due dates and submission counts.</p></div></div><div id="teacherAssignmentList" class="teacher-assignment-list"></div></div>
       </div>
+      <div class="section-head"><div><h3>Submission Review Queue</h3><p>Review evidence, give feedback, and request revision when needed.</p></div><div class="filter-row"><select id="submissionStatusFilter" onchange="renderSubmissionReviewQueue()"><option value="">All submission statuses</option><option value="Submitted">Submitted</option><option value="Needs revision">Needs revision</option><option value="Approved">Approved</option></select></div></div>
+      <div class="table-wrap"><table><caption class="sr-only">Student assignment submission review queue</caption><thead><tr><th>Student</th><th>Assignment</th><th>Submitted</th><th>Evidence</th><th>Status</th><th>Score</th><th>Review</th></tr></thead><tbody id="submissionReviewTable"></tbody></table></div>
     </div>
 
     <div class="teacher-panel" data-teacher-panel="assessments">
@@ -169,25 +175,25 @@
     </div>
 
     <div class="teacher-panel" data-teacher-panel="settings">
-      <div class="card class-control-card"><div class="card-title-row"><div><h4>Class Settings</h4><p>Set the announcement and weekly study-time goal.</p></div><span class="badge badge-blue">V6</span></div>
+      <div class="card class-control-card"><div class="card-title-row"><div><h4>Class Settings</h4><p>Set the announcement and weekly study-time goal.</p></div><span class="badge badge-blue">V7</span></div>
         <form id="classInfoForm" onsubmit="saveClassInfo(event)"><div class="form-grid compact-grid"><div class="full"><label>Announcement to Students</label><textarea name="announcement" maxlength="500"></textarea></div><div><label>Weekly Goal (minutes)</label><input type="number" name="weeklyGoal" min="30" max="600" step="10" value="90"></div><div class="class-control-help"><small>The announcement appears on every student dashboard.</small></div></div><div class="form-actions"><button class="btn btn-primary">Save Class Settings</button></div></form>
       </div>
-      <div class="card security-card"><h4>Security Notes</h4><p>Teacher sessions expire after 30 minutes. This is safer than repeatedly sending the PIN, but Google Sheets and JSONP are still best suited to small classroom deployments rather than sensitive or school-wide data.</p></div>
+      <div class="card security-card"><h4>Security Notes</h4><p>Teacher sessions expire after 30 minutes and student sessions expire after four hours. Access codes are stored as hashes, not plain text. Google Sheets and JSONP remain appropriate only for small classroom pilots and non-sensitive learning data.</p></div>
     </div>
   </div>
 </section>
 </main></div>
 
 <div class="modal" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle"><div class="modal-card" tabindex="-1"><div class="modal-head"><div><h3 id="profileModalTitle">Student Profile</h3><p>This information helps the teacher identify each student.</p></div><button class="close" onclick="closeProfile()" aria-label="Close">✕</button></div>
-<form id="profileForm" onsubmit="saveProfile(event)"><div class="form-grid">
-  <div><label>Student ID</label><input name="studentId" required></div><div class="wide"><label>Full Name</label><input name="name" required></div><div><label>Class</label><input name="className" required placeholder="Example: M1/1"></div><div><label>Starting Level</label><select name="currentLevel" id="profileLevel"></select></div><div><label>Class Code</label><input name="classCode" required></div>
-</div><div class="form-actions"><button type="button" class="btn btn-outline" onclick="closeProfile()">Cancel</button><button class="btn btn-primary">Save Profile</button></div></form></div></div>
+<form id="profileForm" onsubmit="saveProfile(event)"><input type="hidden" name="studentKey"><div class="form-grid">
+  <div><label>Student ID</label><input name="studentId" required autocomplete="username"></div><div class="wide"><label>Full Name</label><input name="name" required></div><div><label>Class</label><input name="className" required placeholder="Example: M1/1"></div><div><label>Starting Level</label><select name="currentLevel" id="profileLevel"></select></div><div><label>Class Code</label><input name="classCode" required></div><div><label>Personal Access Code</label><input type="password" name="accessCode" minlength="6" maxlength="24" required autocomplete="current-password"><small>Use the code provided by your teacher. Existing students on this device may create a code once after upgrading.</small></div>
+</div><div class="form-actions"><button type="button" class="btn btn-outline" onclick="studentLogout()">Sign Out on This Device</button><button type="button" class="btn btn-outline" onclick="closeProfile()">Cancel</button><button class="btn btn-primary">Sign In / Save Profile</button></div></form></div></div>
 <div class="modal" id="studentDetailModal" role="dialog" aria-modal="true" aria-labelledby="studentDetailName"><div class="modal-card modal-wide" tabindex="-1">
   <div class="modal-head"><div><h3 id="studentDetailName">Student Details</h3><p id="studentDetailMeta"></p></div><button class="close" onclick="closeStudentDetail()" aria-label="Close student details">✕</button></div>
   <div id="studentDetailMetrics" class="grid metric-grid detail-metrics"></div>
   <div class="grid two-col detail-layout"><div class="card inner-card"><div class="chart-box small"><canvas id="studentDetailChart"></canvas></div></div><div class="card inner-card"><h4>Skill Evidence</h4><div id="studentDetailSkills" class="mini-skill-grid"></div></div></div>
   <div class="grid two-col detail-layout">
-    <div class="card inner-card"><h4>Teacher Support Notes</h4><form id="teacherNoteForm" onsubmit="saveTeacherNote(event)"><input type="hidden" name="studentKey"><label>Follow-up Status</label><select name="status"><option value="">Not set</option><option value="monitor">Monitor</option><option value="contacted">Contacted</option><option value="supporting">Providing support</option><option value="resolved">Resolved</option></select><label>Guidance or Notes</label><textarea name="note" maxlength="1000"></textarea><label>Next Action</label><input name="nextAction" maxlength="250"><div class="form-actions"><button class="btn btn-primary">Save Guidance</button></div></form></div>
+    <div class="card inner-card"><h4>Teacher Support Notes</h4><form id="teacherNoteForm" onsubmit="saveTeacherNote(event)"><input type="hidden" name="studentKey"><label>Follow-up Status</label><select name="status"><option value="">Not set</option><option value="monitor">Monitor</option><option value="contacted">Contacted</option><option value="supporting">Providing support</option><option value="resolved">Resolved</option></select><label>Guidance or Notes</label><textarea name="note" maxlength="1000"></textarea><label>Next Action</label><input name="nextAction" maxlength="250"><div class="form-actions"><button class="btn btn-primary">Save Guidance</button></div></form><hr class="soft-rule"><form id="studentAccessResetForm" onsubmit="resetStudentAccess(event)"><input type="hidden" name="studentKey"><h5>Reset Student Access</h5><p class="form-help">Create a new temporary code and give it privately to the student.</p><label>New Access Code</label><input type="password" name="accessCode" minlength="6" maxlength="24" required autocomplete="new-password"><div class="form-actions"><button class="btn btn-outline">Reset Access Code</button></div></form></div>
     <div class="card inner-card"><h4>Teacher Assessment</h4><form id="assessmentForm" onsubmit="saveAssessment(event)"><input type="hidden" name="studentKey"><div class="form-grid assessment-form-grid"><div><label>Assessment Type</label><select name="assessmentType"><option value="Baseline">Baseline</option><option value="Progress">Progress</option><option value="Post">Post</option></select></div><div><label>Date</label><input type="date" name="assessmentDate" required></div><div><label>Listening</label><input type="number" name="listening" min="0" max="100"></div><div><label>Speaking</label><input type="number" name="speaking" min="0" max="100"></div><div><label>Reading</label><input type="number" name="reading" min="0" max="100"></div><div><label>Writing</label><input type="number" name="writing" min="0" max="100"></div><div><label>Vocabulary</label><input type="number" name="vocabulary" min="0" max="100"></div><div><label>Grammar</label><input type="number" name="grammar" min="0" max="100"></div><div class="full"><label>Assessment Notes</label><textarea name="notes" maxlength="1000"></textarea></div></div><div class="form-actions"><button class="btn btn-primary">Save Assessment</button></div></form><div id="studentAssessmentHistory" class="assessment-history"></div></div>
   </div>
   <div class="section-head"><div><h3>Recent Activities</h3><p>Verify evidence after reviewing the submitted work.</p></div></div>
@@ -195,6 +201,8 @@
 </div></div>
 
 <div class="modal" id="assignmentSubmissionModal" role="dialog" aria-modal="true" aria-labelledby="assignmentSubmissionTitle"><div class="modal-card" tabindex="-1"><div class="modal-head"><div><h3 id="assignmentSubmissionTitle">Submit Assignment</h3><p id="assignmentSubmissionHint"></p></div><button class="close" onclick="closeAssignmentSubmission()" aria-label="Close assignment submission">✕</button></div><form id="assignmentSubmissionForm" onsubmit="submitAssignment(event)"><input type="hidden" name="assignmentId"><label>Evidence Link</label><input type="url" name="evidenceUrl" placeholder="https://…"><label>Reflection</label><textarea name="reflection" required maxlength="1000" placeholder="What did you learn? What evidence shows your success?"></textarea><div class="form-actions"><button type="button" class="btn btn-outline" onclick="closeAssignmentSubmission()">Cancel</button><button class="btn btn-primary">Submit Assignment</button></div></form></div></div>
+
+<div class="modal" id="submissionReviewModal" role="dialog" aria-modal="true" aria-labelledby="submissionReviewTitle"><div class="modal-card" tabindex="-1"><div class="modal-head"><div><h3 id="submissionReviewTitle">Review Submission</h3><p id="submissionReviewMeta"></p></div><button class="close" onclick="closeSubmissionReview()" aria-label="Close submission review">✕</button></div><div id="submissionReviewContent" class="submission-review-content"></div><form id="submissionReviewForm" onsubmit="saveSubmissionReview(event)"><input type="hidden" name="assignmentId"><input type="hidden" name="studentKey"><label>Status</label><select name="status"><option value="Submitted">Submitted</option><option value="Needs revision">Needs revision</option><option value="Approved">Approved</option></select><label>Score (%)</label><input type="number" name="score" min="0" max="100"><label>Teacher Feedback</label><textarea name="teacherFeedback" maxlength="1000" placeholder="Give specific, actionable feedback."></textarea><div class="form-actions"><button type="button" class="btn btn-outline" onclick="closeSubmissionReview()">Cancel</button><button class="btn btn-primary">Save Review</button></div></form></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="config.js"></script>

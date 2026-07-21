@@ -1,79 +1,45 @@
-# English 6-Level Learning Journey — Version 6
+# English 6-Level Learning Journey — Version 7
 
-Version 6 changes the dashboard from an activity tracker into a more complete classroom learning and assessment system.
+Version 7 is a pilot-ready classroom dashboard for a six-month English learning journey. Students record practice, submit assignment evidence, and view skill development. Teachers create student accounts, review evidence, enter assessments, and identify students who need support.
 
-## Core learning resources
+## Core Features
 
-- Read Along by Google: Levels 1–4
-- ELLO: Levels 1–6
-- British Council LearnEnglish Teens: Levels 1–6
+### Student
+- Protected sign-in using Student ID, Class, Class Code, and a personal access code
+- Learning logs with primary skill, study time, score, confidence, evidence, and reflection
+- Weekly assignments and evidence submission
+- Practice-evidence skill matrix and teacher-entered assessment growth
+- Weekly goal, streak, learning calendar, achievements, backup, print report, dark mode, and PWA installation
 
-## New in Version 6
+### Teacher
+- Teacher-created student accounts and access-code reset
+- Class overview, support alerts, consistency view, student records, and CSV export
+- Assignment creation and a submission review queue
+- Teacher feedback, optional scores, approval, and revision requests
+- Evidence verification, support notes, and baseline/progress/post assessments
+- Class announcements and weekly study goals
 
-### Student experience
+## Data and Security Model
 
-- Weekly Assignments page with deadlines, objectives, evidence requirements, and success criteria
-- Assignment evidence submission and reflection
-- Six-skill matrix: Listening, Speaking, Reading, Writing, Vocabulary, and Grammar
-- Baseline, progress, and post-assessment growth chart
-- Primary skill field in every learning log
-- Teacher verification status for learning evidence
-- Reflection sentence starters for beginning learners
-- Improved keyboard focus, Escape-to-close modals, skip link, and reduced-motion support
+- GitHub Pages hosts the static interface.
+- Google Apps Script connects the interface to Google Sheets.
+- Personal access codes are stored as salted SHA-256 hashes, not plain text.
+- Student sessions last four hours. Teacher sessions last 30 minutes.
+- The service worker handles only same-origin static assets and does not intercept Google Apps Script requests.
 
-### Teacher experience
+This architecture is intended for a small classroom pilot using non-sensitive learning data. Do not store national identification numbers, home addresses, health information, passwords, safeguarding records, or other confidential data.
 
-- Separate tabs for Overview, Students, Assignments, Assessments, and Class Settings
-- Assignment creator with resource links, deadlines, skills, and success criteria
-- Teacher-entered baseline, progress, and post-assessments
-- Evidence verification: Verified, Pending, or Needs revision
-- Assessment completion and growth summary
-- Short-lived teacher sessions that expire after 30 minutes
-- Failed-login limiting and an AuditLog sheet
-- Soft deletion for learning logs so deleted rows are retained in Google Sheets
+## Upgrade from Version 6
 
-## Important security note
-
-Version 6 is safer than earlier versions because the teacher PIN is exchanged for a temporary session token. However, the project still uses GitHub Pages, Google Apps Script, Google Sheets, and JSONP. It is suitable for small classroom use with non-sensitive learning records. It is not designed for confidential student information, school-wide identity management, or high-stakes assessment data.
-
-Do not store national ID numbers, home addresses, health information, passwords, or other sensitive personal data.
-
-## GitHub Pages setup
-
-1. Upload the project files to a GitHub repository.
-2. Keep `index.html`, `app.js`, `styles.css`, and `config.js` in the repository root.
-3. Open **Settings → Pages**.
-4. Select **Deploy from a branch**.
-5. Select `main` and `/ (root)`.
-6. Save and open the published GitHub Pages URL.
-
-## Google Apps Script setup
-
-1. Open `script.google.com` and create or open the existing project.
-2. Copy `backend/Code.gs` into the Apps Script editor.
-3. Set `CLASS_CODE` and `TEACHER_PIN` at the top of the file.
-4. Select `upgradeV6` and click **Run** once.
-5. Approve permissions when Google asks.
-6. Choose **Deploy → Manage deployments**.
-7. Edit the existing Web app deployment.
-8. Select **New version** and click **Deploy**.
-9. Keep the existing `/exec` URL.
-10. Confirm that the same URL and class code remain in `config.js`.
-
-Running `upgradeV6` adds these structures without deleting old records:
-
-- New columns in `Logs`: Skill, VerificationStatus, VerifiedAt, DeletedAt, UpdatedAt
-- New sheet: Assignments
-- New sheet: Submissions
-- New sheet: Assessments
-- New sheet: AuditLog
+Read `MIGRATION_V7.md`. Keep the existing `config.js`, replace `backend/Code.gs`, run `upgradeV7`, and deploy a new version of the existing Apps Script Web app.
 
 ## Files
 
-- `index.html` — interface and page structure
-- `styles.css` — responsive design and accessibility styles
-- `app.js` — dashboard, assignments, skills, assessments, and API calls
-- `config.js` — Google Apps Script URL and class settings
-- `backend/Code.gs` — Google Sheets backend
-- `TEACHER_GUIDE.md` — teacher workflow
-- `MIGRATION_V6.md` — upgrade instructions from Version 5
+- `index.html` — interface
+- `styles.css` — responsive visual design
+- `app.js` — student and teacher application logic
+- `config.js` — API URL, class code, application title, and school name
+- `service-worker.js` and `manifest.webmanifest` — installable PWA support
+- `backend/Code.gs` — Google Apps Script database API
+- `MIGRATION_V7.md` — upgrade instructions
+- `TEACHER_GUIDE.md` — classroom workflow
