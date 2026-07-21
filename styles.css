@@ -69,3 +69,16 @@ main{min-width:0;padding:28px}.page{display:none;animation:fade .25s ease}.page.
   .section-head{margin-top:14px}.chart-box{height:220px}.source-cards{grid-template-columns:repeat(3,1fr)!important}.source-card{min-height:160px}
   th{position:static;background:#eee!important;color:#111!important}.heatmap{overflow:visible}.achievement.locked{display:none}
 }
+
+.class-announcement{display:flex;align-items:flex-start;gap:14px;margin:0 0 18px;padding:17px 19px;border-radius:20px;background:linear-gradient(135deg,#fff8dc,#fff2f6);border:1px solid #f1dfab;box-shadow:0 9px 25px rgba(110,84,22,.08)}
+.class-announcement .announcement-icon{font-size:28px}.class-announcement small,.class-announcement span{display:block;color:var(--muted);font-size:11px}.class-announcement strong{display:block;margin:3px 0 4px;line-height:1.55;color:var(--ink)}
+.class-control-card{margin:16px 0 20px}.compact-grid{grid-template-columns:minmax(0,3fr) minmax(170px,1fr)}.class-control-help{display:flex;align-items:center;color:var(--muted);line-height:1.5}
+.table-actions{display:flex;gap:6px;white-space:nowrap}.btn-xs{border:0;border-radius:10px;padding:7px 9px;font-size:11px;font-weight:800;cursor:pointer}.btn-edit{background:#edf3ff;color:#346fc5}.btn-delete{background:#fff0f3;color:#b1485a}.btn-view{background:#efeaff;color:#7154ca}
+.editing-banner{outline:3px solid rgba(255,173,66,.28);box-shadow:0 16px 44px rgba(255,173,66,.14)}
+.modal-wide{width:min(1120px,100%)}.detail-layout{align-items:start}.inner-card{box-shadow:none}.detail-metrics{grid-template-columns:repeat(4,minmax(0,1fr));margin:16px 0}.detail-metrics .metric{min-height:112px}.detail-layout label{margin-top:10px}
+.student-link{border:0;background:none;padding:0;color:inherit;text-align:left;cursor:pointer}.student-link:hover{text-decoration:underline;color:#7154ca}
+.install-ready{animation:pulse-install 1.5s infinite}@keyframes pulse-install{50%{transform:translateY(-2px);box-shadow:0 8px 22px rgba(77,141,247,.22)}}
+:root[data-theme="dark"] .class-announcement{background:linear-gradient(135deg,#30291b,#30202a);border-color:#5d4d27}:root[data-theme="dark"] .inner-card{background:#162338}
+@media(max-width:900px){.compact-grid,.detail-metrics{grid-template-columns:1fr 1fr}.detail-layout{grid-template-columns:1fr}}
+@media(max-width:590px){.compact-grid,.detail-metrics{grid-template-columns:1fr}.table-actions{flex-direction:column}}
+@media print{.class-control-card,.table-actions,#studentDetailModal{display:none!important}}

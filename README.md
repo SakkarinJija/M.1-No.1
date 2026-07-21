@@ -1,72 +1,65 @@
-# English 6-Level Learning Journey — Version 3
+# English 6-Level Learning Journey
 
-เว็บแดชบอร์ดสำหรับนักเรียนบันทึกการเรียนภาษาอังกฤษ 6 เดือน และให้ครูติดตามข้อมูลนักเรียนทั้งชั้นผ่าน Google Sheets
+แดชบอร์ดแผนเรียน 6 เดือนสำหรับนักเรียน พร้อมหน้าครูดูสถิติรวม
 
-## จุดเด่น Version 3
+## ใช้งานบน GitHub Pages
 
-### สำหรับนักเรียน
+1. สร้าง GitHub Repository
+2. อัปโหลดไฟล์ทั้งหมด
+3. ไปที่ **Settings → Pages**
+4. เลือก **Deploy from a branch**
+5. เลือก `main` และ `/ (root)`
+6. กด **Save**
+
+เว็บไซต์เปิดได้ทันทีในโหมดทดลอง และข้อมูลจะอยู่ในเบราว์เซอร์ของนักเรียนแต่ละเครื่อง
+
+## ให้ครูติดตามข้อมูลนักเรียนทุกคน
+
+GitHub Pages เป็นเว็บแบบ Static จึงต้องใช้ Google Sheets เป็นฐานข้อมูลกลาง
+
+1. เปิด `script.google.com` และสร้างโปรเจกต์
+2. คัดลอก `backend/Code.gs` ไปใส่
+3. เปลี่ยน `CLASS_CODE` และ `TEACHER_PIN`
+4. เลือกฟังก์ชัน `setup` แล้วกด Run เพื่อสร้าง Google Sheets
+5. Deploy → New deployment → Web app
+6. Execute as: **Me**
+7. Who has access: **Anyone**
+8. คัดลอก URL ที่ลงท้าย `/exec`
+9. เปิด `config.js` ใน GitHub แล้วใส่ URL ใน `API_URL`
+10. ตั้ง `CLASS_CODE` ให้ตรงกับ Code.gs แล้ว Commit
+
+## หมายเหตุ
+
+ระดับทั้ง 6 เป็นขั้นกิจกรรมของโครงการ ไม่ใช่การรับรอง CEFR และไม่ควรคาดหวังว่านักเรียนทุกคนจะถึง C1 ภายใน 6 เดือน
+Teacher PIN เป็นการป้องกันแบบพื้นฐาน ไม่ควรเก็บข้อมูลอ่อนไหวในระบบนี้
+
+
+## ฟีเจอร์ Version 2
+
 - เป้าหมายเวลาเรียนรายสัปดาห์
-- Study streak และจำนวนวันที่เรียน
-- Learning Calendar ย้อนหลัง 16 สัปดาห์
-- Achievement Badges 8 แบบ
-- Dark Mode
-- พิมพ์หรือบันทึกรายงานเป็น PDF ผ่านเบราว์เซอร์
-- สำรองและนำเข้าข้อมูล JSON
-- แสดงชื่อ ELLO แต่ยังอ่านข้อมูลเดิมที่บันทึกเป็น ELLLO ได้
+- Study streak
+- กราฟเทียบเวลาเรียนจริงกับเป้าหมาย
+- นำเข้าข้อมูลสำรอง JSON
+- หน้าครูแสดง Active / Watch / Needs support ชัดเจน
+- ตัวกรองตามสถานะและเรียงผู้ที่ต้องติดตามก่อน
+- การ์ดเวลาเฉลี่ยต่อนักเรียน
+- สีเน้นแถวที่ต้องช่วยเหลือ
 
-### สำหรับครู
-- Active / Watch / Needs support
-- เวลาเรียนสัปดาห์ปัจจุบัน
-- จำนวนวันที่เรียนใน 30 วัน
-- Streak รายคน
-- Consistency Spotlight โดยไม่ใช้คะแนนจัดอันดับ
-- Intervention Priority สำหรับนักเรียนที่ขาดกิจกรรม
-- รีเฟรชอัตโนมัติทุก 5 นาทีหลังเข้าสู่หน้าครู
-- ส่งออก CSV และพิมพ์รายงาน
 
-## การแก้ไขแหล่งเรียนตามคำขอ
+## ฟีเจอร์ Version 4
 
-- Read Along by Google: `Level 1–4`
-- ELLLO แสดงบนหน้าเว็บเป็น `ELLO`
-- ELLO: `Level 1–6`
-- LearnEnglish Teens: `Level 1–6`
+- ครูตั้งประกาศประจำชั้นและเป้าหมายรายสัปดาห์จากหน้า Teacher Dashboard
+- นักเรียนแก้ไขหรือลบบันทึกการเรียนของตนเอง
+- ครูเปิดดูกราฟและประวัติของนักเรียนรายคน
+- ครูบันทึกสถานะการติดตาม คำแนะนำ และขั้นตอนถัดไป
+- ติดตั้งเป็นเว็บแอปบนคอมพิวเตอร์หรือโทรศัพท์ได้ (PWA)
+- ใช้ Google Sheets เดิมได้ ระบบเพิ่มคอลัมน์และชีตใหม่โดยไม่ลบข้อมูลเก่า
 
-> ระบบยังส่งค่าของ ELLO ไปยังฐานข้อมูลเป็น `ELLLO` เพื่อให้เข้ากันได้กับข้อมูลเดิม แต่หน้าเว็บทั้งหมดจะแสดงเป็น `ELLO`
+## การอัปเกรด Backend เป็น V4
 
-## ไฟล์สำคัญ
-
-```text
-index.html          หน้าเว็บหลัก
-styles.css          รูปแบบ สี Dark Mode และหน้าพิมพ์
-app.js              ตรรกะแดชบอร์ด กราฟ Heatmap และรายงาน
-config.js           URL Apps Script และรหัสชั้นเรียน
-backend/Code.gs     ฐานข้อมูล Google Sheets และข้อมูลหน้าครู
-TEACHER_GUIDE.md    คู่มือใช้งานหน้าครู
-MIGRATION_V3.md     วิธีอัปเดตจาก Version 2
-```
-
-## ติดตั้งใหม่
-
-1. อัปโหลดไฟล์ทั้งหมดไปยัง GitHub Repository
-2. เปิด `config.js`
-3. ใส่ Web App URL ที่ลงท้าย `/exec`
-4. ตั้ง `CLASS_CODE` ให้ตรงกับ `backend/Code.gs`
-5. คัดลอก `backend/Code.gs` ไปยัง Google Apps Script
-6. เปลี่ยน `CLASS_CODE` และ `TEACHER_PIN`
-7. Run ฟังก์ชัน `setup` หนึ่งครั้ง
-8. Deploy เป็น Web app
-   - Execute as: Me
-   - Who has access: Anyone
-9. เปิด GitHub Settings → Pages → Deploy from `main` และ `/ (root)`
-
-## อัปเดตจาก Version 2
-
-ใช้ไฟล์ชุด Update V3 ซึ่งไม่มี `config.js` เพื่อไม่ให้ URL `/exec` และ `CLASS_CODE` เดิมถูกเขียนทับ
-
-สิ่งที่ต้องทำเพิ่มคือคัดลอก `backend/Code.gs` เวอร์ชันใหม่ไปแทนของเดิม แล้ว Deploy เป็น New version โดยไม่ต้อง Run `setup` ใหม่ และไม่ต้องสร้าง Google Sheets ใหม่
-
-ดูขั้นตอนเต็มใน `MIGRATION_V3.md`
-
-## ความเป็นส่วนตัว
-
-ควรเก็บเฉพาะข้อมูลที่จำเป็นต่อการเรียน เช่น รหัสนักเรียน ชื่อ ห้อง เวลาเรียน และผลกิจกรรม ไม่ควรเก็บเลขบัตรประชาชน ที่อยู่ ข้อมูลสุขภาพ หรือข้อมูลอ่อนไหวอื่นในระบบนี้
+1. สำรอง `CLASS_CODE` และ `TEACHER_PIN` เดิม
+2. นำ `backend/Code.gs` ของ V4 ไปแทนโค้ดเดิม
+3. ใส่ `CLASS_CODE` และ `TEACHER_PIN` เดิมกลับเข้าไป
+4. Save แล้วเลือกฟังก์ชัน `upgradeV4` กด Run หนึ่งครั้ง
+5. Deploy → Manage deployments → Edit → New version → Deploy
+6. ใช้ URL `/exec` เดิมได้ ไม่ต้องแก้ `config.js`

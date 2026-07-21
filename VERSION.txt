@@ -1,12 +1,2 @@
-Version 3.0
-
-Features:
-- Read Along Level 1-4
-- ELLO display name and Level 1-6
-- Dark Mode
-- 16-week learning heatmap
-- Achievement badges
-- Printable/PDF reports
-- Teacher consistency and intervention panels
-- Weekly minutes, 30-day active days, and streak per student
-- Backward compatibility with existing ELLLO records
+Version 4.0
+Class announcements, teacher-set weekly goal, student log editing/deletion, student drill-down, teacher notes, and PWA install.

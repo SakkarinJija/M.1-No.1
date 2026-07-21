@@ -16,10 +16,11 @@ const SOURCES = [
 const CFG = window.APP_CONFIG || {};
 const API_READY = Boolean(CFG.API_URL && CFG.API_URL.startsWith("https://script.google.com/"));
 const $ = id => document.getElementById(id);
-let state = {profile:null,logs:[],teacher:null};
+let state = {profile:null,logs:[],teacher:null,classInfo:{announcement:"",weeklyGoal:0,updatedAt:""},studentDetail:null};
 let charts = {};
 let teacherPinCache = "";
 let teacherAutoRefresh = null;
+let deferredInstallPrompt = null;
 
 const key = name => `english6_${name}`;
 
@@ -27,6 +28,7 @@ window.addEventListener("DOMContentLoaded", init);
 
 async function init(){
   applyTheme(localStorage.getItem(key("theme")) || "light", false);
+  initPwa();
   $("appTitle").textContent = CFG.APP_TITLE || "English 6-Level Learning Journey";
   $("schoolName").textContent = CFG.SCHOOL_NAME || "Student progress dashboard";
   $("todayText").textContent = new Intl.DateTimeFormat("th-TH",{dateStyle:"long"}).format(new Date());
@@ -54,12 +56,15 @@ function persistLocal(){
 async function loadStudent(){
   state.profile = JSON.parse(localStorage.getItem(key("profile")) || "null");
   state.logs = JSON.parse(localStorage.getItem(key("logs")) || "[]");
+  state.classInfo = JSON.parse(localStorage.getItem(key("classInfo")) || "null") || state.classInfo;
   if(API_READY && state.profile?.studentKey){
     try{
       const data = await api("studentData",{studentKey:state.profile.studentKey,classCode:CFG.CLASS_CODE});
       if(data.ok){
         state.profile = data.profile;
         state.logs = data.logs || [];
+        state.classInfo = data.classInfo || state.classInfo;
+        localStorage.setItem(key("classInfo"),JSON.stringify(state.classInfo));
         persistLocal();
       }
     }catch(error){
@@ -87,7 +92,7 @@ function metrics(){
   const levelProgress = LEVELS.map(level=>levelProgressOf(level,logs));
   const week = currentWeekData(logs);
   const streak = studyStreak(logs);
-  const weeklyGoal = Math.max(60,Math.round((LEVELS[currentLevel-1]?.minutes || 240)/4));
+  const weeklyGoal = num(state.classInfo?.weeklyGoal) || Math.max(60,Math.round((LEVELS[currentLevel-1]?.minutes || 240)/4));
   const activeDays = uniqueStudyDays(logs).length;
   const sourceUsage = groupSource(logs);
   const sourceCount = Object.values(sourceUsage).filter(value=>value>0).length;
@@ -123,6 +128,7 @@ function renderStudent(){
     const className = progress>=.95 ? "done active" : level.level===m.currentLevel ? "active" : "";
     return `<div class="level-pill ${className}" style="--level-color:${level.color}">L${level.level}<br>${level.title}<div class="level-percent">${Math.round(progress*100)}%</div></div>`;
   }).join("");
+  renderClassAnnouncement();
   renderStudentCharts();
   renderRecent();
   renderHeatmap();
@@ -152,7 +158,13 @@ function renderStudentCharts(){
 function renderRecent(){
   const rows = [...state.logs].sort((a,b)=>String(b.Date ?? b.date).localeCompare(String(a.Date ?? a.date))).slice(0,10);
   $("recentTable").innerHTML = rows.length ? rows.map(log=>`<tr><td>${fmtDate(log.Date ?? log.date)}</td><td><span class="badge badge-purple">L${log.Level ?? log.level}</span></td><td>${esc(displaySource(log.Source ?? log.source))}</td><td>${esc(log.Activity ?? log.activity)}</td><td>${num(log.Minutes ?? log.minutes)} นาที</td><td>${(log.Score ?? log.score) || "-"}</td></tr>`).join("") : `<tr><td colspan="6" class="empty">ยังไม่มีข้อมูล</td></tr>`;
-  $("myLogTable").innerHTML = state.logs.length ? [...state.logs].reverse().map(log=>`<tr><td>${fmtDate(log.Date ?? log.date)}</td><td>L${log.Level ?? log.level}</td><td>${esc(displaySource(log.Source ?? log.source))}</td><td>${esc(log.Activity ?? log.activity)}</td><td>${num(log.Minutes ?? log.minutes)}</td><td>${num(log.Completed ?? log.completed)}</td><td>${(log.Score ?? log.score) || "-"}</td><td>${esc((log.Reflection ?? log.reflection) || "")}</td></tr>`).join("") : `<tr><td colspan="8" class="empty">ยังไม่มีข้อมูล</td></tr>`;
+  const history = [...state.logs].sort((a,b)=>String(b.Date ?? b.date).localeCompare(String(a.Date ?? a.date)) || String(b.CreatedAt ?? b.createdAt ?? "").localeCompare(String(a.CreatedAt ?? a.createdAt ?? "")));
+  $("myLogTable").innerHTML = history.length ? history.map(log=>{
+    const id = log.LogId ?? log.logId ?? "";
+    const localId = id || log._localId || "";
+    const actions = localId ? `<div class="table-actions"><button class="btn-xs btn-edit" onclick="editLog('${escAttr(localId)}')">แก้ไข</button><button class="btn-xs btn-delete" onclick="deleteLog('${escAttr(localId)}')">ลบ</button></div>` : `<small title="ให้ครูอัปเดต Code.gs เป็น V4 เพื่อแก้ไขรายการเก่า">รายการเก่า</small>`;
+    return `<tr><td>${fmtDate(log.Date ?? log.date)}</td><td>L${log.Level ?? log.level}</td><td>${esc(displaySource(log.Source ?? log.source))}</td><td>${esc(log.Activity ?? log.activity)}</td><td>${num(log.Minutes ?? log.minutes)}</td><td>${num(log.Completed ?? log.completed)}</td><td>${(log.Score ?? log.score) || "-"}</td><td>${esc((log.Reflection ?? log.reflection) || "")}</td><td>${actions}</td></tr>`;
+  }).join("") : `<tr><td colspan="9" class="empty">ยังไม่มีข้อมูล</td></tr>`;
 }
 
 function renderSources(){
@@ -234,21 +246,24 @@ async function submitLog(event){
   const log = Object.fromEntries(new FormData(event.target).entries());
   log.studentKey = state.profile.studentKey;
   log.classCode = CFG.CLASS_CODE;
+  const isEditing = Boolean(log.logId);
   try{
     if(API_READY){
-      const data = await api("submitLog",log);
+      const data = await api(isEditing?"updateLog":"submitLog",log);
       if(!data.ok) throw Error(data.error);
       await loadStudent();
+    }else if(isEditing){
+      const index = state.logs.findIndex(item=>(item.LogId ?? item.logId ?? item._localId)===log.logId);
+      if(index<0) throw Error("ไม่พบรายการที่ต้องการแก้ไข");
+      state.logs[index] = {...state.logs[index],...log,LogId:log.logId,_localId:log.logId};
+      persistLocal();renderStudent();
     }else{
-      state.logs.push({...log,createdAt:new Date().toISOString()});
-      persistLocal();
-      renderStudent();
+      const localId = crypto.randomUUID();
+      state.logs.push({...log,LogId:localId,_localId:localId,createdAt:new Date().toISOString()});
+      persistLocal();renderStudent();
     }
-    toast("บันทึกผลการเรียนแล้ว");
-    event.target.reset();
-    event.target.date.value = todayISO();
-    event.target.minutes.value = 30;
-    event.target.completed.value = 1;
+    toast(isEditing?"แก้ไขบันทึกแล้ว":"บันทึกผลการเรียนแล้ว");
+    cancelEditLog();
     showPage("dashboard");
   }catch(error){toast(error.message)}
 }
@@ -273,6 +288,7 @@ async function refreshTeacher(silent=false){
     const data = await api("teacherData",{pin:teacherPinCache,classCode:CFG.CLASS_CODE});
     if(!data.ok) throw Error(data.error);
     state.teacher = data;
+    state.classInfo = data.classInfo || state.classInfo;
     $("teacherLogin").classList.add("hidden");
     $("teacherLayout").classList.add("active");
     populateClasses();
@@ -285,10 +301,11 @@ function localTeacher(){
   const m = metrics();
   const lastActive = state.logs.length ? String(state.logs.map(log=>log.Date ?? log.date).sort().at(-1) || "") : "";
   return {
-    students:state.profile ? [{studentId:state.profile.studentId,name:state.profile.name,className:state.profile.className,currentLevel:m.currentLevel,minutes:m.minutes,activities:m.activities,avgScore:m.avgScore,lastActive,weekMinutes:m.week.minutes,activeDays30:activeDaysWithin(state.logs,30),streak:m.streak,sessions30:logsWithin(state.logs,30).length}] : [],
+    students:state.profile ? [{studentKey:state.profile.studentKey,studentId:state.profile.studentId,name:state.profile.name,className:state.profile.className,currentLevel:m.currentLevel,minutes:m.minutes,activities:m.activities,avgScore:m.avgScore,lastActive,weekMinutes:m.week.minutes,activeDays30:activeDaysWithin(state.logs,30),streak:m.streak,sessions30:logsWithin(state.logs,30).length}] : [],
     weekly:buildWeekly(state.logs,12),
     sourceUsage:groupSource(state.logs),
-    generatedAt:new Date().toISOString()
+    generatedAt:new Date().toISOString(),
+    classInfo:state.classInfo
   };
 }
 
@@ -307,6 +324,8 @@ function filteredTeacherStudents(){
 function renderTeacher(){
   if(!state.teacher) return;
   const students = filteredTeacherStudents();
+  const classForm = $("classInfoForm");
+  if(classForm){classForm.elements.announcement.value=state.classInfo?.announcement||"";classForm.elements.weeklyGoal.value=num(state.classInfo?.weeklyGoal)||90;}
   const minutes = sum(students,student=>num(student.minutes));
   const scores = students.map(student=>num(student.avgScore)).filter(score=>score>0);
   const active = students.filter(student=>daysAgo(student.lastActive)<=7).length;
@@ -365,18 +384,18 @@ function renderTeacherTable(){
     .sort((a,b)=>b._days-a._days || num(a.weekMinutes)-num(b.weekMinutes));
   $("teacherStudentTable").innerHTML = rows.length ? rows.map(student=>{
     const status = student._days<=7 ? ["Active","badge-green","#2fc6a1",""] : student._days<=14 ? ["Watch","badge-orange","#ffad42","watch-row"] : ["Needs support","badge-red","#ff6f91","risk-row"];
-    return `<tr class="${status[3]}"><td><b>${esc(student.name)}</b><br><small>${esc(student.studentId)}</small></td><td>${esc(student.className)}</td><td><span class="badge badge-purple">Level ${num(student.currentLevel)}</span></td><td>${num(student.weekMinutes)} นาที</td><td>${num(student.activeDays30)} วัน</td><td><span class="streak-chip">🔥 ${num(student.streak)}</span></td><td>${num(student.avgScore).toFixed(1)}%</td><td>${fmtDate(student.lastActive)}</td><td><div class="student-status"><span class="status-dot" style="background:${status[2]}"></span><span class="badge ${status[1]}">${status[0]}</span></div></td></tr>`;
-  }).join("") : `<tr><td colspan="9" class="empty">ไม่พบนักเรียน</td></tr>`;
+    return `<tr class="${status[3]}"><td><button class="student-link" onclick="openStudentDetail('${escAttr(student.studentKey)}')"><b>${esc(student.name)}</b><br><small>${esc(student.studentId)}</small></button></td><td>${esc(student.className)}</td><td><span class="badge badge-purple">Level ${num(student.currentLevel)}</span></td><td>${num(student.weekMinutes)} นาที</td><td>${num(student.activeDays30)} วัน</td><td><span class="streak-chip">🔥 ${num(student.streak)}</span></td><td>${num(student.avgScore).toFixed(1)}%</td><td>${fmtDate(student.lastActive)}</td><td><div class="student-status"><span class="status-dot" style="background:${status[2]}"></span><span class="badge ${status[1]}">${status[0]}</span></div></td><td><button class="btn-xs btn-view" onclick="openStudentDetail('${escAttr(student.studentKey)}')">ดูรายคน</button></td></tr>`;
+  }).join("") : `<tr><td colspan="10" class="empty">ไม่พบนักเรียน</td></tr>`;
 }
 
 function exportTeacherCsv(){
   if(!state.teacher) return;
   const header = ["Student ID","Name","Class","Current Level","Total Minutes","Week Minutes","Activities","Active Days 30","Streak","Average Score","Last Active"];
   const rows = (state.teacher.students || []).map(student=>[student.studentId,student.name,student.className,student.currentLevel,student.minutes,student.weekMinutes,student.activities,student.activeDays30,student.streak,student.avgScore,student.lastActive]);
-  download('\ufeff'+[header,...rows].map(row=>row.map(csv).join(",")).join("\n"),"teacher_summary_v3.csv","text/csv;charset=utf-8");
+  download('\ufeff'+[header,...rows].map(row=>row.map(csv).join(",")).join("\n"),"teacher_summary_v4.csv","text/csv;charset=utf-8");
 }
 
-function exportMyData(){download(JSON.stringify({version:3,exportedAt:new Date().toISOString(),profile:state.profile,logs:state.logs},null,2),"my_english_data_v3.json","application/json")}
+function exportMyData(){download(JSON.stringify({version:4,exportedAt:new Date().toISOString(),profile:state.profile,logs:state.logs},null,2),"my_english_data_v4.json","application/json")}
 
 function importMyData(event){
   const file = event.target.files?.[0];
@@ -404,6 +423,60 @@ function openProfile(){
   $("profileModal").classList.add("open");
 }
 function closeProfile(){$("profileModal").classList.remove("open")}
+
+
+function renderClassAnnouncement(){
+  const box = $("classAnnouncement");
+  if(!box) return;
+  const text = String(state.classInfo?.announcement || "").trim();
+  box.classList.toggle("hidden",!text);
+  if(text){$("announcementText").textContent=text;$("announcementUpdated").textContent=state.classInfo?.updatedAt?`อัปเดต ${fmtDate(state.classInfo.updatedAt)}`:"";}
+}
+
+function findLogById(id){return state.logs.find(log=>(log.LogId ?? log.logId ?? log._localId)===id)}
+function editLog(id){
+  const log=findLogById(id);if(!log){toast("ไม่พบบันทึก");return;}
+  const form=$("logForm");
+  const map={logId:id,date:log.Date??log.date,level:log.Level??log.level,source:(log.Source??log.source)==="ELLO"?"ELLLO":(log.Source??log.source),minutes:log.Minutes??log.minutes,activity:log.Activity??log.activity,completed:log.Completed??log.completed,score:log.Score??log.score,confidence:log.Confidence??log.confidence,evidence:log.Evidence??log.evidence,reflection:log.Reflection??log.reflection};
+  Object.entries(map).forEach(([name,value])=>{if(form.elements[name])form.elements[name].value=value??""});
+  $("logFormTitle").textContent="แก้ไขบันทึกการเรียน";$("logFormHint").textContent="ตรวจสอบข้อมูลแล้วกดบันทึกการแก้ไข";$("saveLogButton").textContent="บันทึกการแก้ไข";$("cancelEditButton").classList.remove("hidden");form.closest(".form-card").classList.add("editing-banner");showPage("log");
+}
+function cancelEditLog(){
+  const form=$("logForm");if(!form)return;form.reset();form.elements.logId.value="";form.elements.date.value=todayISO();form.elements.minutes.value=30;form.elements.completed.value=1;$("logFormTitle").textContent="บันทึกการเรียน";$("logFormHint").textContent="กรอกหลังเรียนเสร็จ ใช้เวลาประมาณ 1 นาที";$("saveLogButton").textContent="บันทึกผลการเรียน";$("cancelEditButton").classList.add("hidden");form.closest(".form-card").classList.remove("editing-banner");
+}
+async function deleteLog(id){
+  if(!confirm("ต้องการลบบันทึกรายการนี้หรือไม่?"))return;
+  try{if(API_READY){const data=await api("deleteLog",{classCode:CFG.CLASS_CODE,studentKey:state.profile.studentKey,logId:id});if(!data.ok)throw Error(data.error);await loadStudent();}else{state.logs=state.logs.filter(log=>(log.LogId??log.logId??log._localId)!==id);persistLocal();renderStudent();}toast("ลบบันทึกแล้ว");}catch(error){toast(error.message)}
+}
+
+async function saveClassInfo(event){
+  event.preventDefault();const form=Object.fromEntries(new FormData(event.target).entries());
+  try{if(API_READY){const data=await api("updateClassInfo",{...form,pin:teacherPinCache,classCode:CFG.CLASS_CODE});if(!data.ok)throw Error(data.error);state.classInfo=data.classInfo;}else{state.classInfo={...form,weeklyGoal:num(form.weeklyGoal),updatedAt:todayISO()};localStorage.setItem(key("classInfo"),JSON.stringify(state.classInfo));}renderStudent();toast("บันทึกการตั้งค่าชั้นเรียนแล้ว");}catch(error){toast(error.message)}
+}
+
+async function openStudentDetail(studentKey){
+  try{let data;if(API_READY){data=await api("studentDetail",{pin:teacherPinCache,classCode:CFG.CLASS_CODE,studentKey});if(!data.ok)throw Error(data.error);}else{data={ok:true,profile:state.profile,logs:state.logs,note:JSON.parse(localStorage.getItem(key("teacherNote"))||"null")||{}};}state.studentDetail=data;renderStudentDetail();$("studentDetailModal").classList.add("open");}catch(error){toast(error.message)}
+}
+function closeStudentDetail(){$("studentDetailModal").classList.remove("open")}
+function renderStudentDetail(){
+  const data=state.studentDetail;if(!data)return;const profile=data.profile||{},logs=data.logs||[],minutes=sum(logs,log=>num(log.Minutes??log.minutes)),scores=logs.map(log=>num(log.Score??log.score)).filter(Boolean),avg=scores.length?sum(scores,x=>x)/scores.length:0,week=currentWeekData(logs),streak=studyStreak(logs);
+  $("studentDetailName").textContent=profile.name||"รายละเอียดนักเรียน";$("studentDetailMeta").textContent=`${profile.studentId||"-"} · ${profile.className||"-"} · Level ${profile.currentLevel||1}`;
+  const cards=[["เวลาเรียน",minutes,"นาที"],["สัปดาห์นี้",week.minutes,"นาที"],["Streak",streak,"วัน"],["คะแนนเฉลี่ย",avg.toFixed(1),"%"]];$("studentDetailMetrics").innerHTML=cards.map(card=>`<div class="card metric"><div class="metric-label">${card[0]}</div><div class="metric-value">${card[1]}</div><div class="metric-sub">${card[2]}</div></div>`).join("");
+  const weekly=buildWeekly(logs,8);setChart("studentDetailChart","bar",{labels:weekly.map(item=>item.label),datasets:[{label:"นาที",data:weekly.map(item=>item.minutes),backgroundColor:"#8367ee",borderRadius:8}]},{plugins:{title:{display:true,text:"เวลาเรียน 8 สัปดาห์ล่าสุด"}},scales:{y:{beginAtZero:true}}});
+  $("studentDetailLogs").innerHTML=logs.length?[...logs].sort((a,b)=>String(b.Date).localeCompare(String(a.Date))).slice(0,20).map(log=>`<tr><td>${fmtDate(log.Date)}</td><td>L${log.Level}</td><td>${esc(displaySource(log.Source))}</td><td>${esc(log.Activity)}</td><td>${num(log.Minutes)}</td><td>${log.Score||"-"}</td><td>${esc(log.Reflection||"")}</td></tr>`).join(""):`<tr><td colspan="7" class="empty">ยังไม่มีข้อมูล</td></tr>`;
+  const form=$("teacherNoteForm"),note=data.note||{};form.elements.studentKey.value=profile.studentKey||"";form.elements.status.value=note.Status??note.status??"";form.elements.note.value=note.TeacherNote??note.note??"";form.elements.nextAction.value=note.NextAction??note.nextAction??"";
+}
+async function saveTeacherNote(event){
+  event.preventDefault();const form=Object.fromEntries(new FormData(event.target).entries());
+  try{if(API_READY){const data=await api("saveTeacherNote",{...form,pin:teacherPinCache,classCode:CFG.CLASS_CODE});if(!data.ok)throw Error(data.error);state.studentDetail.note=data.note;}else{localStorage.setItem(key("teacherNote"),JSON.stringify(form));state.studentDetail.note=form;}toast("บันทึกคำแนะนำของครูแล้ว");}catch(error){toast(error.message)}
+}
+
+function initPwa(){
+  if("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js").catch(()=>{});
+  window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();deferredInstallPrompt=event;const button=$("installButton");if(button){button.classList.remove("hidden");button.classList.add("install-ready")}});
+  window.addEventListener("appinstalled",()=>{deferredInstallPrompt=null;$("installButton")?.classList.add("hidden");toast("ติดตั้งแอปแล้ว")});
+}
+async function installApp(){if(!deferredInstallPrompt){toast("เบราว์เซอร์นี้ยังไม่แสดงตัวเลือกติดตั้ง");return;}deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;$("installButton")?.classList.add("hidden");}
 
 function getNextAction(m){
   if(!m.minutes) return "เริ่ม Level 1 ด้วย Read Along 15–20 นาที แล้วบันทึกกิจกรรมแรก";
@@ -547,6 +620,7 @@ function todayISO(){return localISO(new Date())}
 function localISO(date){const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,"0"),d=String(date.getDate()).padStart(2,"0");return `${y}-${m}-${d}`}
 function num(value){const number=Number(value);return Number.isFinite(number)?number:0}
 function sum(array,fn){return array.reduce((total,item)=>total+fn(item),0)}
+function escAttr(value){return esc(value).replace(/`/g,"&#096;")}
 function esc(value){return String(value ?? "").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[char]))}
 function csv(value){return `"${String(value ?? "").replaceAll('"','""')}"`}
 function download(content,name,type){const blob=new Blob([content],{type}),anchor=document.createElement("a");anchor.href=URL.createObjectURL(blob);anchor.download=name;anchor.click();setTimeout(()=>URL.revokeObjectURL(anchor.href),1000)}

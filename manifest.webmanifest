@@ -1,0 +1,11 @@
+{
+  "name": "English 6-Level Learning Journey",
+  "short_name": "English Journey",
+  "description": "Student learning dashboard and teacher progress tracker",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#173e79",
+  "icons": [{"src":"favicon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]
+}

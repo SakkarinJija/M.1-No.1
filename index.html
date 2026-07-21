@@ -4,17 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173e79">
-<title>English 6-Level Learning Journey · V3</title>
+<title>English 6-Level Learning Journey · V4</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <header class="topbar">
   <div class="brand">
-    <div class="brand-mark">V3</div>
+    <div class="brand-mark">V4</div>
     <div><h1 id="appTitle">English 6-Level Learning Journey</h1><small id="schoolName">Student progress dashboard</small></div>
   </div>
   <div class="top-actions">
+    <button class="btn btn-soft hidden" id="installButton" onclick="installApp()">＋ ติดตั้งแอป</button>
     <button class="btn btn-icon" id="themeButton" onclick="toggleTheme()" title="สลับโหมดสี" aria-label="สลับโหมดสี">🌙</button>
     <button class="btn btn-soft" onclick="printReport()">🖨 รายงาน</button>
     <button class="btn btn-soft" onclick="openProfile()">👤 โปรไฟล์</button>
@@ -32,15 +34,20 @@
   <button class="nav-btn" data-page="roadmap" onclick="showPage('roadmap')"><span class="nav-icon">◫</span>6 ระดับ</button>
   <div class="nav-title teacher-nav-title">Teacher</div>
   <button class="nav-btn" data-page="teacher" onclick="showPage('teacher')"><span class="nav-icon">▥</span>ติดตามชั้นเรียน</button>
-  <div class="sidebar-note"><strong>Version 3</strong><br>ติดตามเป้าหมายรายสัปดาห์ ความสม่ำเสมอ เหรียญความสำเร็จ และนักเรียนที่ควรได้รับการช่วยเหลือ</div>
+  <div class="sidebar-note"><strong>Version 4</strong><br>ประกาศชั้นเรียน แก้ไขบันทึก ดูข้อมูลรายคน และบันทึกการช่วยเหลือของครู</div>
 </aside>
 <main>
 <div class="setup-banner" id="setupBanner">ขณะนี้เป็นโหมดทดลอง ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้เท่านั้น หากต้องการให้ครูติดตามนักเรียนทุกคน ให้เชื่อม Google Apps Script ตาม README</div>
 
 <section id="dashboard" class="page active">
   <div class="hero">
-    <div class="hero-content"><span class="eyebrow">6 MONTH LEARNING JOURNEY · VERSION 3</span><h2 id="welcomeText">Welcome, learner! 👋</h2><p>ฝึกจาก 3 เว็บไซต์หลักอย่างเป็นขั้นตอน บันทึกเวลา คะแนน ผลงาน และความสม่ำเสมอ เพื่อให้เห็นพัฒนาการจริง</p></div>
+    <div class="hero-content"><span class="eyebrow">6 MONTH LEARNING JOURNEY · VERSION 4</span><h2 id="welcomeText">Welcome, learner! 👋</h2><p>ฝึกจาก 3 เว็บไซต์หลักอย่างเป็นขั้นตอน บันทึกเวลา คะแนน ผลงาน และความสม่ำเสมอ เพื่อให้เห็นพัฒนาการจริง</p></div>
     <div class="hero-side"><div id="todayText" class="hero-date"></div><span id="modeBadge" class="mode-badge">กำลังโหลด…</span></div>
+  </div>
+
+  <div id="classAnnouncement" class="class-announcement hidden">
+    <div class="announcement-icon">📣</div>
+    <div><small>ประกาศจากครู</small><strong id="announcementText"></strong><span id="announcementUpdated"></span></div>
   </div>
 
   <div class="grid metric-grid" id="studentMetrics"></div>
@@ -68,8 +75,8 @@
 </section>
 
 <section id="log" class="page">
-  <div class="section-head"><div><h3>บันทึกการเรียน</h3><p>กรอกหลังเรียนเสร็จ ใช้เวลาประมาณ 1 นาที</p></div></div>
-  <div class="card form-card"><form id="logForm" onsubmit="submitLog(event)"><div class="form-grid">
+  <div class="section-head"><div><h3 id="logFormTitle">บันทึกการเรียน</h3><p id="logFormHint">กรอกหลังเรียนเสร็จ ใช้เวลาประมาณ 1 นาที</p></div></div>
+  <div class="card form-card"><form id="logForm" onsubmit="submitLog(event)"><input type="hidden" name="logId"><div class="form-grid">
     <div><label>วันที่</label><input type="date" name="date" required></div>
     <div><label>ระดับ</label><select name="level" id="logLevel" required></select></div>
     <div><label>เว็บไซต์</label><select name="source" required><option value="Read Along">Read Along</option><option value="ELLLO">ELLO</option><option value="LearnEnglish Teens">LearnEnglish Teens</option></select></div>
@@ -80,9 +87,9 @@
     <div><label>ความมั่นใจ 1–5</label><select name="confidence"><option value="">ไม่ระบุ</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
     <div><label>หลักฐาน/ลิงก์ผลงาน</label><input name="evidence" placeholder="ถ้ามี"></div>
     <div class="full"><label>สิ่งที่ได้เรียนรู้หรือจุดที่ยังยาก</label><textarea name="reflection" placeholder="เช่น วันนี้ฟังคำเชื่อมได้ดีขึ้น แต่ยังพูดตามไม่ทัน"></textarea></div>
-  </div><div class="form-actions"><button type="reset" class="btn btn-outline">ล้างข้อมูล</button><button class="btn btn-primary">บันทึกผลการเรียน</button></div></form></div>
+  </div><div class="form-actions"><button type="button" id="cancelEditButton" class="btn btn-outline hidden" onclick="cancelEditLog()">ยกเลิกการแก้ไข</button><button type="reset" class="btn btn-outline" onclick="setTimeout(cancelEditLog,0)">ล้างข้อมูล</button><button id="saveLogButton" class="btn btn-primary">บันทึกผลการเรียน</button></div></form></div>
   <div class="section-head"><div><h3>ประวัติของฉัน</h3></div></div>
-  <div class="table-wrap"><table><thead><tr><th>วันที่</th><th>ระดับ</th><th>เว็บไซต์</th><th>กิจกรรม</th><th>นาที</th><th>จบ</th><th>คะแนน</th><th>สะท้อนผล</th></tr></thead><tbody id="myLogTable"></tbody></table></div>
+  <div class="table-wrap"><table><thead><tr><th>วันที่</th><th>ระดับ</th><th>เว็บไซต์</th><th>กิจกรรม</th><th>นาที</th><th>จบ</th><th>คะแนน</th><th>สะท้อนผล</th><th>จัดการ</th></tr></thead><tbody id="myLogTable"></tbody></table></div>
 </section>
 
 <section id="roadmap" class="page"><div class="section-head"><div><h3>Roadmap 6 เดือน · 6 ระดับ</h3><p>ระดับเป็นขั้นพัฒนาของโครงการ ไม่ใช่การรับรอง CEFR อย่างเป็นทางการ</p></div></div><div class="roadmap-grid" id="roadmapGrid"></div></section>
@@ -94,6 +101,15 @@
     <div class="grid metric-grid" id="teacherMetrics"></div>
     <div class="teacher-alerts" id="teacherAlerts"></div>
 
+    <div class="card class-control-card">
+      <div class="card-title-row"><div><h4>Class Control Center</h4><p>กำหนดข้อความที่นักเรียนเห็นและเป้าหมายเวลาเรียนต่อสัปดาห์</p></div><span class="badge badge-blue">V4</span></div>
+      <form id="classInfoForm" onsubmit="saveClassInfo(event)"><div class="form-grid compact-grid">
+        <div class="full"><label>ประกาศถึงนักเรียน</label><textarea name="announcement" maxlength="500" placeholder="เช่น สัปดาห์นี้ให้ทำ ELLO A1 อย่างน้อย 2 บท"></textarea></div>
+        <div><label>เป้าหมายรายสัปดาห์ (นาที)</label><input type="number" name="weeklyGoal" min="30" max="600" step="10" value="90"></div>
+        <div class="class-control-help"><small>ข้อความนี้จะแสดงบนหน้าภาพรวมของนักเรียนทุกคน และใช้เป็นเส้นเป้าหมายในกราฟ</small></div>
+      </div><div class="form-actions"><button class="btn btn-primary">บันทึกการตั้งค่าชั้นเรียน</button></div></form>
+    </div>
+
     <div class="grid three-col teacher-charts"><div class="card"><div class="chart-box small"><canvas id="teacherWeeklyChart"></canvas></div></div><div class="card"><div class="chart-box small"><canvas id="teacherLevelChart"></canvas></div></div><div class="card"><div class="chart-box small"><canvas id="teacherSourceChart"></canvas></div></div></div>
 
     <div class="section-head"><div><h3>ความสม่ำเสมอและการช่วยเหลือ</h3><p>ยกย่องความต่อเนื่อง และจัดลำดับผู้ที่ควรได้รับการติดต่อก่อน</p></div></div>
@@ -103,7 +119,7 @@
     </div>
 
     <div class="section-head"><div><h3>รายงานรายนักเรียน</h3><p>เรียงนักเรียนที่ต้องติดตามก่อน</p></div><div class="filter-row"><select id="teacherStatusFilter" onchange="renderTeacherTable()"><option value="">ทุกสถานะ</option><option value="active">Active</option><option value="watch">Watch</option><option value="support">Needs support</option></select><input id="studentSearch" placeholder="ค้นหาชื่อหรือรหัส…" oninput="renderTeacherTable()"></div></div>
-    <div class="table-wrap"><table><thead><tr><th>นักเรียน</th><th>ห้อง</th><th>ระดับ</th><th>สัปดาห์นี้</th><th>วันที่เรียน 30 วัน</th><th>Streak</th><th>คะแนนเฉลี่ย</th><th>เข้าใช้ล่าสุด</th><th>สถานะ</th></tr></thead><tbody id="teacherStudentTable"></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>นักเรียน</th><th>ห้อง</th><th>ระดับ</th><th>สัปดาห์นี้</th><th>วันที่เรียน 30 วัน</th><th>Streak</th><th>คะแนนเฉลี่ย</th><th>เข้าใช้ล่าสุด</th><th>สถานะ</th><th>รายละเอียด</th></tr></thead><tbody id="teacherStudentTable"></tbody></table></div>
   </div>
 </section>
 </main></div>
@@ -112,6 +128,16 @@
 <form id="profileForm" onsubmit="saveProfile(event)"><div class="form-grid">
   <div><label>รหัสนักเรียน</label><input name="studentId" required></div><div class="wide"><label>ชื่อ–นามสกุล</label><input name="name" required></div><div><label>ชั้น/ห้อง</label><input name="className" required placeholder="เช่น M1/1"></div><div><label>ระดับเริ่มต้น</label><select name="currentLevel" id="profileLevel"></select></div><div><label>รหัสชั้นเรียน</label><input name="classCode" required></div>
 </div><div class="form-actions"><button type="button" class="btn btn-outline" onclick="closeProfile()">ยกเลิก</button><button class="btn btn-primary">บันทึกโปรไฟล์</button></div></form></div></div>
+<div class="modal" id="studentDetailModal"><div class="modal-card modal-wide">
+  <div class="modal-head"><div><h3 id="studentDetailName">รายละเอียดนักเรียน</h3><p id="studentDetailMeta"></p></div><button class="close" onclick="closeStudentDetail()" aria-label="ปิด">✕</button></div>
+  <div id="studentDetailMetrics" class="grid metric-grid detail-metrics"></div>
+  <div class="grid two-col detail-layout">
+    <div class="card inner-card"><div class="chart-box small"><canvas id="studentDetailChart"></canvas></div></div>
+    <div class="card inner-card"><h4>บันทึกช่วยเหลือของครู</h4><form id="teacherNoteForm" onsubmit="saveTeacherNote(event)"><input type="hidden" name="studentKey"><label>สถานะการติดตาม</label><select name="status"><option value="">ยังไม่กำหนด</option><option value="monitor">ติดตาม</option><option value="contacted">ติดต่อแล้ว</option><option value="supporting">กำลังช่วยเหลือ</option><option value="resolved">เรียบร้อย</option></select><label>คำแนะนำ/บันทึก</label><textarea name="note" maxlength="1000" placeholder="บันทึกสำหรับครู ไม่แสดงให้นักเรียนเห็น"></textarea><label>ขั้นตอนถัดไป</label><input name="nextAction" maxlength="250" placeholder="เช่น นัดพูดคุยวันศุกร์"><div class="form-actions"><button class="btn btn-primary">บันทึกคำแนะนำ</button></div></form></div>
+  </div>
+  <div class="section-head"><div><h3>กิจกรรมล่าสุด</h3><p>แสดงสูงสุด 20 รายการ</p></div></div>
+  <div class="table-wrap"><table><thead><tr><th>วันที่</th><th>ระดับ</th><th>เว็บไซต์</th><th>กิจกรรม</th><th>นาที</th><th>คะแนน</th><th>Reflection</th></tr></thead><tbody id="studentDetailLogs"></tbody></table></div>
+</div></div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="config.js"></script>
