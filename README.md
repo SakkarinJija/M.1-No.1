@@ -1,0 +1,34 @@
+# English 6-Level Learning Journey
+
+แดชบอร์ดแผนเรียน 6 เดือนสำหรับนักเรียน พร้อมหน้าครูดูสถิติรวม
+
+## ใช้งานบน GitHub Pages
+
+1. สร้าง GitHub Repository
+2. อัปโหลดไฟล์ทั้งหมด
+3. ไปที่ **Settings → Pages**
+4. เลือก **Deploy from a branch**
+5. เลือก `main` และ `/ (root)`
+6. กด **Save**
+
+เว็บไซต์เปิดได้ทันทีในโหมดทดลอง และข้อมูลจะอยู่ในเบราว์เซอร์ของนักเรียนแต่ละเครื่อง
+
+## ให้ครูติดตามข้อมูลนักเรียนทุกคน
+
+GitHub Pages เป็นเว็บแบบ Static จึงต้องใช้ Google Sheets เป็นฐานข้อมูลกลาง
+
+1. เปิด `script.google.com` และสร้างโปรเจกต์
+2. คัดลอก `backend/Code.gs` ไปใส่
+3. เปลี่ยน `CLASS_CODE` และ `TEACHER_PIN`
+4. เลือกฟังก์ชัน `setup` แล้วกด Run เพื่อสร้าง Google Sheets
+5. Deploy → New deployment → Web app
+6. Execute as: **Me**
+7. Who has access: **Anyone**
+8. คัดลอก URL ที่ลงท้าย `/exec`
+9. เปิด `config.js` ใน GitHub แล้วใส่ URL ใน `API_URL`
+10. ตั้ง `CLASS_CODE` ให้ตรงกับ Code.gs แล้ว Commit
+
+## หมายเหตุ
+
+ระดับทั้ง 6 เป็นขั้นกิจกรรมของโครงการ ไม่ใช่การรับรอง CEFR และไม่ควรคาดหวังว่านักเรียนทุกคนจะถึง C1 ภายใน 6 เดือน
+Teacher PIN เป็นการป้องกันแบบพื้นฐาน ไม่ควรเก็บข้อมูลอ่อนไหวในระบบนี้
